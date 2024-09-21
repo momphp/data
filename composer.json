@@ -1,0 +1,21 @@
+{
+    "name": "mom/data",
+    "description": "A simple DTO package.",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Mom\\Data\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Darwin Luague",
+            "email": "darwinluague9001@gmail.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {
+        "php": "^8.3"
+    }
+}
