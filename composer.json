@@ -16,6 +16,9 @@
     ],
     "minimum-stability": "stable",
     "require": {
-        "php": "^8.3"
+        "php": "^8.2",
+        "illuminate/collections": "^v11.26.0",
+        "illuminate/http": "^v11.26.0",
+        "illuminate/database": "^v11.26.0"
     }
 }
