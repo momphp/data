@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Mom\Data;
 
 use BackedEnum;
@@ -17,8 +19,15 @@ abstract class Value
 
     final public function __construct(
         protected readonly mixed $value = null,
-    ) {
-    }
+    ) {}
+
+    abstract public static function fromEloquentModel(Model $model);
+
+    abstract public static function fromArray(array $item);
+
+    abstract public function isNull(): bool;
+
+    abstract public function toPrimitive(): mixed;
 
     public static function getName(): string
     {
@@ -30,17 +39,9 @@ abstract class Value
         return static::getName();
     }
 
-    abstract public static function fromEloquentModel(Model $model);
-
-    abstract public static function fromArray(array $item);
-
-    abstract public function isNull(): bool;
-
-    abstract public function toPrimitive(): mixed;
-
     public static function getNameForHuman(): string
     {
-        return static::getName().'_for_human';
+        return static::getName() . '_for_human';
     }
 
     public static function fromData(Data $data): static
@@ -68,7 +69,7 @@ abstract class Value
 
     public static function getDatabaseTableColumnNameWithTable(BackedEnum|string|null $table = null): string
     {
-        if ($table === null) {
+        if (null === $table) {
             return static::getDatabaseTableColumnName();
         }
 
@@ -76,12 +77,12 @@ abstract class Value
             $table = $table->value;
         }
 
-        return "{$table}.".static::getDatabaseTableColumnName();
+        return "{$table}." . static::getDatabaseTableColumnName();
     }
 
     public static function getAliasedColumnNameWithTableForSelect(BackedEnum|string|null $table = null): string
     {
-        if ($table === null) {
+        if (null === $table) {
             return static::getAliasedColumnName($table);
         }
 
@@ -89,12 +90,12 @@ abstract class Value
             $table = $table->value;
         }
 
-        return "{$table}.".static::getDatabaseTableColumnName().' as '.static::getAliasedColumnName($table);
+        return "{$table}." . static::getDatabaseTableColumnName() . ' as ' . static::getAliasedColumnName($table);
     }
 
     public static function getAliasedColumnNameWithTable(BackedEnum|string|null $table = null): string
     {
-        if ($table === null) {
+        if (null === $table) {
             return static::getAliasedColumnName($table);
         }
 
@@ -102,12 +103,12 @@ abstract class Value
             $table = $table->value;
         }
 
-        return "{$table}.".static::getAliasedColumnName($table);
+        return "{$table}." . static::getAliasedColumnName($table);
     }
 
     public static function getAliasedColumnName(BackedEnum|string|null $table = null): string
     {
-        if ($table === null) {
+        if (null === $table) {
             return static::getName();
         }
 
@@ -115,37 +116,37 @@ abstract class Value
             $table = $table->value;
         }
 
-        return "{$table}_".static::getName();
+        return "{$table}_" . static::getName();
     }
 
     public static function getNameForValidation(?string $parent = null, bool $isArray = false, bool $associative = false): string
     {
-        if ($parent === null && $isArray === false) {
+        if (null === $parent && false === $isArray) {
             return static::getName();
         }
 
         if ($isArray && $associative) {
-            return $parent.'.*.'.static::getName();
+            return $parent . '.*.' . static::getName();
         }
 
-        if ($isArray && $parent !== null) {
-            return $parent.'.*';
+        if ($isArray && null !== $parent) {
+            return $parent . '.*';
         }
 
-        if ($isArray && $parent === null) {
-            return static::getName().'.*';
+        if ($isArray && null === $parent) {
+            return static::getName() . '.*';
         }
 
-        return $parent.'.'.static::getName();
+        return $parent . '.' . static::getName();
     }
 
     public static function getNameForErrorMessage(string $rule, ?string $parent = null): string
     {
-        if ($parent === null) {
-            return static::getName().'.'.$rule;
+        if (null === $parent) {
+            return static::getName() . '.' . $rule;
         }
 
-        return $parent.'.*.'.static::getName().'.'.$rule;
+        return $parent . '.*.' . static::getName() . '.' . $rule;
     }
 
     public function getEloquentModel(): ?Model
@@ -174,7 +175,7 @@ abstract class Value
 
     public function isNotNull(): bool
     {
-        return $this->isNull() === false;
+        return false === $this->isNull();
     }
 
     public function toEncrypted(): string

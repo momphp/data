@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Mom\Data;
 
 use Closure;
@@ -7,9 +9,16 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 abstract class DataValue
 {
+    abstract public function __construct(mixed $value = null);
+
     abstract public function toNullableData(): mixed;
 
     abstract public function toData(): mixed;
+
+    public static function new(): static
+    {
+        return new static();
+    }
 
     public static function fromClosure(Closure $value): static
     {
@@ -18,7 +27,7 @@ abstract class DataValue
 
     public function isNull(): bool
     {
-        return $this->toNullableData() === null;
+        return null === $this->toNullableData();
     }
 
     public function toArray(): array
@@ -52,7 +61,7 @@ abstract class DataValue
     {
         $value = $this->toNullableArray();
 
-        if ($value === null) {
+        if (null === $value) {
             return null;
         }
 

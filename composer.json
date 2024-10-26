@@ -8,6 +8,11 @@
             "Mom\\Data\\": "src/"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "Mom\\Data\\Tests\\": "tests/"
+        }
+    },
     "authors": [
         {
             "name": "Darwin Luague",
@@ -20,5 +25,8 @@
         "illuminate/collections": "^v11.26.0",
         "illuminate/http": "^v11.26.0",
         "illuminate/database": "^v11.26.0"
+    },
+    "require-dev": {
+        "pestphp/pest": "^v3.3.1"
     }
 }
