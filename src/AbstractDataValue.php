@@ -7,10 +7,8 @@ namespace Mom\Data;
 use Closure;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-abstract class DataValue
+abstract class AbstractDataValue extends AbstractValue
 {
-    abstract public function __construct(mixed $value = null);
-
     abstract public function toNullableData(): mixed;
 
     abstract public function toData(): mixed;
@@ -34,7 +32,7 @@ abstract class DataValue
     {
         $data = $this->toData();
 
-        if ($data instanceof Data) {
+        if ($data instanceof AbstractData) {
             return $data->toArray();
         }
 
@@ -45,7 +43,7 @@ abstract class DataValue
     {
         $data = $this->toNullableData();
 
-        if ($data instanceof Data) {
+        if ($data instanceof AbstractData) {
             return $data->toArray();
         }
 

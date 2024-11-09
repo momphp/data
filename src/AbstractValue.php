@@ -9,29 +9,33 @@ use Closure;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Hash;
-use LogicException;
 
-abstract class Value
+abstract class AbstractValue
 {
-    private ?Model $eloquentModel = null;
-
-    private mixed $item = null;
+    private mixed $data = null;
 
     final public function __construct(
         protected readonly mixed $value = null,
     ) {}
 
-    abstract public static function fromEloquentModel(Model $model);
-
-    abstract public static function fromArray(array $item);
-
-    abstract public function isNull(): bool;
-
     abstract public function toPrimitive(): mixed;
 
-    public static function getName(): string
+    abstract public static function getName(): string;
+
+    public static function fromEloquentModel(Model $model): static
     {
-        throw new LogicException('Method not implemented');
+        $value = $model->getAttributes()[static::getDatabaseTableColumnName()] ?? null;
+
+        return (new static(value: $value))
+            ->setData($model);
+    }
+
+    public static function fromDataArray(array $item): static
+    {
+        $value = $item[static::getName()] ?? null;
+
+        return (new static(value: $value))
+            ->setData($item);
     }
 
     public static function getDatabaseTableColumnName(): string
@@ -44,7 +48,7 @@ abstract class Value
         return static::getName() . '_for_human';
     }
 
-    public static function fromData(Data $data): static
+    public static function fromData(AbstractData $data): static
     {
         return new static(value: $data);
     }
@@ -61,7 +65,7 @@ abstract class Value
         }
 
         if (is_array($item)) {
-            return static::new()->fromArray($item);
+            return static::new()->fromDataArray($item);
         }
 
         return new static(value: $item);
@@ -149,28 +153,23 @@ abstract class Value
         return $parent . '.*.' . static::getName() . '.' . $rule;
     }
 
-    public function getEloquentModel(): ?Model
+    public function getData(): mixed
     {
-        return $this->eloquentModel;
+        return $this->data;
     }
 
-    public function setEloquentModel(?Model $eloquentModel): static
+    public function setData(mixed $data): static
     {
-        $this->eloquentModel = $eloquentModel;
+        $this->data = $data;
 
         return $this;
     }
 
-    public function getItem(): mixed
+    public function isNull(): bool
     {
-        return $this->item;
-    }
+        $value = $this->toValue();
 
-    public function setItem(mixed $item): static
-    {
-        $this->item = $item;
-
-        return $this;
+        return null === $value;
     }
 
     public function isNotNull(): bool

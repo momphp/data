@@ -15,7 +15,7 @@ use ReflectionProperty;
 use RuntimeException;
 use stdClass;
 
-abstract class Data
+abstract class AbstractData
 {
     private ?Model $eloquentModel = null;
 
@@ -23,13 +23,18 @@ abstract class Data
 
     private bool $existsInDatabase = false;
 
-    abstract public function getPrimaryKey(): Value;
-
-    abstract public static function getFactory(): Factory;
+    public static function getFactory(): ?Factory
+    {
+        return null;
+    }
 
     public static function fake(array $attributes = [], array $with = [], bool $persist = true): static
     {
         $factory = static::getFactory();
+
+        if (null === $factory) {
+            throw new RuntimeException('The getFactory method must be implemented.');
+        }
 
         if (true === $persist) {
             $model = $factory->create($attributes);
@@ -45,6 +50,10 @@ abstract class Data
     public static function fakeCollection(array $attributes = [], int $count = 2, array $with = [], bool $persist = true): Collection
     {
         $factory = static::getFactory();
+
+        if (null === $factory) {
+            throw new RuntimeException('The getFactory method must be implemented.');
+        }
 
         if (true === $persist) {
             $models = $factory->count($count)->create($attributes);
@@ -66,7 +75,7 @@ abstract class Data
                 /** @var ReflectionNamedType $type */
                 $type = $property->getType();
 
-                /** @var Value $name */
+                /** @var AbstractValue $name */
                 $name = $type->getName();
 
                 return [$property->name => $name::new()];
@@ -85,10 +94,10 @@ abstract class Data
                 /** @var ReflectionNamedType $type */
                 $type = $property->getType();
 
-                /** @var Value $name */
+                /** @var AbstractValue $name */
                 $name = $type->getName();
 
-                return [$property->name => $name::fromArray($item)];
+                return [$property->name => $name::fromDataArray($item)];
             })->toArray();
 
         /** @phpstan-ignore-next-line */
@@ -108,7 +117,7 @@ abstract class Data
                 /** @var ReflectionNamedType $type */
                 $type = $property->getType();
 
-                /** @var Value $name */
+                /** @var AbstractValue $name */
                 $name = $type->getName();
 
                 return [$property->name => $name::fromEloquentModel($model)];
@@ -118,7 +127,7 @@ abstract class Data
         return (new static(...$properties))->setEloquentModel($model);
     }
 
-    public static function fromData(Data $data, string $method = 'fromData', mixed $options = null): static
+    public static function fromData(AbstractData $data, string $method = 'fromData', mixed $options = null): static
     {
         $class = new ReflectionClass(static::class);
 
@@ -127,7 +136,7 @@ abstract class Data
                 /** @var ReflectionNamedType $type */
                 $type = $property->getType();
 
-                /** @var Value $name */
+                /** @var AbstractValue $name */
                 $name = $type->getName();
 
                 if (false === method_exists($name, $method)) {
@@ -152,7 +161,7 @@ abstract class Data
                 /** @var ReflectionNamedType $type */
                 $type = $property->getType();
 
-                /** @var DataValue $name */
+                /** @var AbstractDataValue $name */
                 $name = $type->getName();
 
                 if (false === method_exists($name, $method)) {
@@ -181,7 +190,7 @@ abstract class Data
                 return static::fromArray($item);
             }
 
-            if ($item instanceof Data) {
+            if ($item instanceof AbstractData) {
                 return static::fromData($item);
             }
 
@@ -203,11 +212,16 @@ abstract class Data
             return static::fromArray($item);
         }
 
-        if ($item instanceof Data) {
+        if ($item instanceof AbstractData) {
             return static::fromData($item);
         }
 
         return static::new();
+    }
+
+    public function getPrimaryKey(): AbstractValue
+    {
+        throw new RuntimeException('The getPrimaryKey method must be implemented.');
     }
 
     public function getMorphAlias(): ?BackedEnum
@@ -215,7 +229,7 @@ abstract class Data
         return $this->morphAlias;
     }
 
-    public function setMorphAlias(?BackedEnum $morphAlias): Data
+    public function setMorphAlias(?BackedEnum $morphAlias): AbstractData
     {
         $this->morphAlias = $morphAlias;
 
@@ -268,7 +282,7 @@ abstract class Data
 
     public function toArray(): array
     {
-        throw new RuntimeException('The toResource method must be implemented.');
+        throw new RuntimeException('The toArray method must be implemented.');
     }
 
     public function forDatabaseCreate(): array
