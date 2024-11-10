@@ -22,7 +22,7 @@ composer require mom/data
 
 ### Step 1: Create a property class
 
-Define a property class and extend `AbstractString`, `AbstractInteger`, `AbstractFloat`, `AbstractCollection` or `AbstractBoolean` based on the property type:
+Define a property class and extend `AbstractString`, `AbstractInteger`, `AbstractFloat`, `AbstractCollection`, `AbstractDate`, `AbstractDataValue` or `AbstractBoolean` based on the property type:
 
 ```php
 <?php
