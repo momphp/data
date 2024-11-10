@@ -1,7 +1,7 @@
 # Minimalist Data Transfer Object (DTO) Package for PHP
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/mom/data.svg?style=flat-square)](https://packagist.org/packages/mom/data)
-[![Total Downloads](https://img.shields.io/packagist/dt/mom/data.svg?style=flat-square)](https://packagist.org/packages/momphp/data)
+[![Total Downloads](https://img.shields.io/packagist/dt/mom/data.svg?style=flat-square)](https://packagist.org/packages/mom/data)
 
 A simple and flexible Data Transfer Object (DTO) package for PHP, allowing clean data encapsulation and validation.
 
