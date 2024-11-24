@@ -43,8 +43,23 @@ abstract class AbstractDate extends AbstractValue
         return $this->toNullableCarbon() ?? Carbon::now();
     }
 
+    public function toNullableDateTimeString(): ?string
+    {
+        return $this->toNullableCarbon()?->toDateTimeString();
+    }
+
     public function toDateTimeString(): string
     {
         return $this->toCarbon()->toDateTimeString();
+    }
+
+    public function toNullableDateString(): ?string
+    {
+        return $this->toNullableCarbon()?->toDateString();
+    }
+
+    public function toDateString(): string
+    {
+        return $this->toCarbon()->toDateString();
     }
 }
