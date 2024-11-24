@@ -179,13 +179,22 @@ abstract class AbstractValue
 
     public function toEncrypted(): string
     {
-        try {
-            $temp = decrypt($this->toPrimitive());
+        $value = $this->toPrimitive();
 
-            return encrypt($temp);
+        try {
+            return encrypt(decrypt($value));
         } catch (DecryptException) {
-            return $this->toPrimitive() ?? '';
+            return encrypt($value);
         }
+    }
+
+    public function toNullableEncrypted(): ?string
+    {
+        if ($this->isNull()) {
+            return null;
+        }
+
+        return $this->toEncrypted();
     }
 
     public function toDecrypted(): string
@@ -195,6 +204,15 @@ abstract class AbstractValue
         } catch (DecryptException) {
             return $this->toPrimitive() ?? '';
         }
+    }
+
+    public function toNullableDecrypted(): ?string
+    {
+        if ($this->isNull()) {
+            return null;
+        }
+
+        return $this->toDecrypted();
     }
 
     public function toHashed(): string
