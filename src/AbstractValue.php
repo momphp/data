@@ -64,10 +64,6 @@ abstract class AbstractValue
             return static::new()->fromEloquentModel($item);
         }
 
-        if (is_array($item)) {
-            return static::new()->fromDataArray($item);
-        }
-
         return new static(value: $item);
     }
 

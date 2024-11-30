@@ -94,4 +94,4 @@ Contributions are welcome! Please submit issues or pull requests.
 
 ## License
 
-This package is open-sourced software licensed under
+This package is open-sourced software licensed under MIT license

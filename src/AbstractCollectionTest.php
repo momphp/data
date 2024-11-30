@@ -3,15 +3,7 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Collection;
-use Mom\Data\AbstractCollection;
-
-class Roles extends AbstractCollection
-{
-    public static function getName(): string
-    {
-        return 'roles';
-    }
-}
+use Mom\Data\Tests\Unit\User\Properties\Roles;
 
 test('fromArray method', function (): void {
     $array = [
@@ -141,4 +133,18 @@ test('toCollection method: null', function (): void {
         ->toBeInstanceOf(Collection::class)
         ->and($roles->toCollection()->isEmpty())
         ->toBeTrue();
+});
+
+test('from method', function (): void {
+    $rolesArray = ['admin', 'user'];
+    $rolesOne = Roles::from($rolesArray);
+    $rolesTwo = Roles::from($rolesOne);
+    $rolesThree = Roles::from(collect($rolesArray));
+
+    expect($rolesOne->toArray())
+        ->toBe($rolesArray)
+        ->and($rolesTwo->toArray())
+        ->toBe($rolesArray)
+        ->and($rolesThree->toArray())
+        ->toBe($rolesArray);
 });

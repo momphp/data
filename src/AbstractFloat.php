@@ -29,6 +29,10 @@ abstract class AbstractFloat extends AbstractValue
             return $value;
         }
 
+        if ($value instanceof AbstractFloat) {
+            return $value->toNullableFloat();
+        }
+
         return null;
     }
 

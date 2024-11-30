@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Mom\Data;
 
 use BackedEnum;
+use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -15,7 +16,7 @@ use ReflectionProperty;
 use RuntimeException;
 use stdClass;
 
-abstract class AbstractData
+abstract class AbstractData implements Arrayable
 {
     private ?Model $eloquentModel = null;
 
@@ -175,13 +176,13 @@ abstract class AbstractData
         return new static(...$properties);
     }
 
-    public static function collect(Collection|array $items): Collection
+    public static function collect(Collection|array $items, string $method = 'fromData'): Collection
     {
         if (is_array($items)) {
             $items = collect($items);
         }
 
-        return $items->map(function (mixed $item) {
+        return $items->map(function (mixed $item) use ($method) {
             if ($item instanceof Model) {
                 return static::fromEloquentModel($item);
             }
@@ -191,7 +192,7 @@ abstract class AbstractData
             }
 
             if ($item instanceof AbstractData) {
-                return static::fromData($item);
+                return static::fromData($item, $method);
             }
 
             if ($item instanceof stdClass) {

@@ -45,6 +45,10 @@ abstract class AbstractCollection extends AbstractValue
             return collect($value);
         }
 
+        if ($value instanceof AbstractCollection) {
+            return $value->toNullableCollection();
+        }
+
         return null;
     }
 

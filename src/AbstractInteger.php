@@ -29,6 +29,10 @@ abstract class AbstractInteger extends AbstractValue
             return $value;
         }
 
+        if ($value instanceof AbstractInteger) {
+            return $value->toNullableInteger();
+        }
+
         return null;
     }
 

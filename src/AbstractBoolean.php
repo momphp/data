@@ -6,7 +6,7 @@ namespace Mom\Data;
 
 abstract class AbstractBoolean extends AbstractValue
 {
-    abstract public function toBoolean(): bool;
+    abstract public function default(): bool;
 
     public static function fromBoolean(bool $value): static
     {
@@ -39,6 +39,15 @@ abstract class AbstractBoolean extends AbstractValue
             return false;
         }
 
+        if ($value instanceof AbstractBoolean) {
+            return $value->toNullableBoolean();
+        }
+
         return null;
+    }
+
+    public function toBoolean(): bool
+    {
+        return $this->toNullableBoolean() ?? $this->default();
     }
 }

@@ -35,6 +35,10 @@ abstract class AbstractDate extends AbstractValue
             return Carbon::parse($value);
         }
 
+        if ($value instanceof AbstractDate) {
+            return $value->toNullableCarbon();
+        }
+
         return null;
     }
 
