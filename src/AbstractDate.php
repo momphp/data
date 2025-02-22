@@ -57,6 +57,16 @@ abstract class AbstractDate extends AbstractValue
         return $this->toCarbon()->toDateTimeString();
     }
 
+    public function toISOString(): string
+    {
+        return $this->toCarbon()->toISOString();
+    }
+
+    public function toNullableISOString(): ?string
+    {
+        return $this->toNullableCarbon()?->toISOString();
+    }
+
     public function toNullableDateString(): ?string
     {
         return $this->toNullableCarbon()?->toDateString();
