@@ -22,7 +22,7 @@
     "minimum-stability": "stable",
     "require": {
         "php": "^8.2",
-        "laravel/framework": "^v11.30.0",
+        "laravel/framework": "^12.1",
         "fakerphp/faker": "^1.23",
         "spatie/ray": "^1.41"
     },
