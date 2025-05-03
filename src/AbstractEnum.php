@@ -2,11 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Metatech\Support\Abstracts;
+namespace Mom\Data;
 
 use BackedEnum;
 use Illuminate\Database\Eloquent\Model;
-use Mom\Data\AbstractValue;
 
 abstract class AbstractEnum extends AbstractValue
 {
