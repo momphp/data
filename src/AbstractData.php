@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Mom\Data;
 
 use BackedEnum;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Model;
@@ -18,7 +19,7 @@ use stdClass;
 
 abstract class AbstractData implements Arrayable
 {
-    private ?Model $eloquentModel = null;
+    private Model|Authenticatable|null $eloquentModel = null;
 
     private ?BackedEnum $morphAlias = null;
 
@@ -40,12 +41,15 @@ abstract class AbstractData implements Arrayable
         if (true === $persist) {
             $model = $factory->create($attributes);
 
-            return self::fromEloquentModel($model->load($with))->setIsExistsInDatabase(true);
+            return self::fromEloquentModel($model->load($with))
+                ->setIsExistsInDatabase(true)
+                ->setEloquentModel($model);
         }
 
         $model = $factory->make($attributes);
 
-        return self::fromEloquentModel($model);
+        return self::fromEloquentModel($model)
+            ->setEloquentModel($model);
     }
 
     public static function fakeCollection(array $attributes = [], int $count = 2, array $with = [], bool $persist = true): Collection
