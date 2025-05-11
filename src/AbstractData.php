@@ -241,7 +241,7 @@ abstract class AbstractData implements Arrayable
         return $this;
     }
 
-    public function getEloquentModel(): ?Model
+    public function getEloquentModel(): Model|Authenticatable|null
     {
         return $this->eloquentModel;
     }
