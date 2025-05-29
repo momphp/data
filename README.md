@@ -137,7 +137,7 @@ return new class extends Migration
 }
 ```
 
-### Step 2: Create a DTO class
+### Step 3: Create a DTO class
 
 Next, create DTO class and extend `AbstractData` class:
 
@@ -191,7 +191,7 @@ class User extends AbstractData
 }
 ```
 
-### Step 3: Use the DTO class
+### Step 4: Use the DTO class
 
 Once created, you can now access the typed Eloquent properties:
 
