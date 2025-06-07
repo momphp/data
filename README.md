@@ -159,7 +159,7 @@ class User extends AbstractData
         private Uuid $uuid,
         private FirstName $firstName,
         private LastName $lastName,
-        private Email $email
+        private Email $email,
         private Password $password
     ) {}
     

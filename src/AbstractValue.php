@@ -213,7 +213,13 @@ abstract class AbstractValue
 
     public function toHashed(): string
     {
-        return Hash::make($this->toDecrypted());
+        $value = $this->toDecrypted();
+
+        if (Hash::isHashed($value)) {
+            return $value;
+        }
+
+        return Hash::make($value);
     }
 
     public function toValue(): mixed
