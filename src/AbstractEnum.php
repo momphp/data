@@ -52,12 +52,28 @@ abstract class AbstractEnum extends AbstractValue
 
     public function toNullableString(): ?string
     {
-        return $this->toNullableEnum()?->value;
+        $enum = $this->toNullableEnum();
+
+        if (null === $enum) {
+            return null;
+        }
+
+        return (string) $enum->value;
     }
 
     public function toString(): string
     {
-        return $this->toEnum()->value;
+        return (string) $this->toEnum()->value;
+    }
+
+    public function toNullableInteger(): ?int
+    {
+        return (int) $this->toNullableString();
+    }
+
+    public function toInteger(): int
+    {
+        return (int) $this->toString();
     }
 
     public function toPrimitive(): ?string
