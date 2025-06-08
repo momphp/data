@@ -26,6 +26,10 @@ abstract class AbstractValue
     {
         $value = $model->getAttributes()[static::getDatabaseTableColumnName()] ?? null;
 
+        if (is_string($value) && json_validate($value)) {
+            $value = json_decode($value, true);
+        }
+
         return (new static(value: $value))
             ->setData($model);
     }
