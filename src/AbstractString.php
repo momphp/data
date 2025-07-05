@@ -16,6 +16,15 @@ abstract class AbstractString extends AbstractValue
         return new static($value);
     }
 
+    public static function forArrayValue(AbstractValue $value): ?string
+    {
+        if ($value instanceof AbstractString) {
+            return $value->toNullableString();
+        }
+
+        return null;
+    }
+
     public function toPrimitive(): ?string
     {
         return $this->toNullableString();

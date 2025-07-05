@@ -15,7 +15,9 @@ declare(strict_types=1);
 
 use Mom\Data\Tests\TestCase;
 
-pest()->extend(TestCase::class)->in('Unit');
+pest()
+    ->extend(TestCase::class)
+    ->in('Unit', '../src');
 
 /*
 |--------------------------------------------------------------------------
@@ -28,7 +30,7 @@ pest()->extend(TestCase::class)->in('Unit');
 |
 */
 
-//expect()->extend('toBeOne', fn () => $this->toBe(1));
+// expect()->extend('toBeOne', fn () => $this->toBe(1));
 
 /*
 |--------------------------------------------------------------------------

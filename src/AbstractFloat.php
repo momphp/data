@@ -16,6 +16,15 @@ abstract class AbstractFloat extends AbstractValue
         return new static($value);
     }
 
+    public static function forArrayValue(AbstractValue $value): ?float
+    {
+        if ($value instanceof AbstractFloat) {
+            return $value->toNullableFloat();
+        }
+
+        return null;
+    }
+
     public function toPrimitive(): ?float
     {
         return $this->toNullableFloat();

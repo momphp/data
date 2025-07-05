@@ -20,6 +20,15 @@ abstract class AbstractEnum extends AbstractValue
         return new static(value: $value);
     }
 
+    public static function forArrayValue(AbstractValue $value): ?string
+    {
+        if ($value instanceof AbstractEnum) {
+            return $value->toNullableString();
+        }
+
+        return null;
+    }
+
     public static function fromArray(array $item): static
     {
         return new static(value: $item[static::getName()] ?? null);

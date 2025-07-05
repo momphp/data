@@ -17,12 +17,12 @@ use Mom\Data\Tests\Unit\User\Properties\Uuid;
 class User extends AbstractData
 {
     public function __construct(
-        private Age $age,
-        private Balance $balance,
-        private CreatedAt $createdAt,
-        private Email $email,
-        private Roles $roles,
-        private Uuid $uuid,
+        public Age $age,
+        public Balance $balance,
+        public CreatedAt $createdAt,
+        public Email $email,
+        public Roles $roles,
+        public Uuid $uuid,
     ) {}
 
     public static function getFactory(): Factory
@@ -40,9 +40,9 @@ class User extends AbstractData
         return $this->age;
     }
 
-    public function setAge(Age $age): User
+    public function setAge(mixed $age): User
     {
-        $this->age = $age;
+        $this->age = new Age($age);
 
         return $this;
     }
@@ -52,9 +52,9 @@ class User extends AbstractData
         return $this->balance;
     }
 
-    public function setBalance(Balance $balance): User
+    public function setBalance(mixed $balance): User
     {
-        $this->balance = $balance;
+        $this->balance = new Balance($balance);
 
         return $this;
     }
@@ -64,9 +64,9 @@ class User extends AbstractData
         return $this->createdAt;
     }
 
-    public function setCreatedAt(CreatedAt $createdAt): User
+    public function setCreatedAt(mixed $createdAt): User
     {
-        $this->createdAt = $createdAt;
+        $this->createdAt = new CreatedAt($createdAt);
 
         return $this;
     }
@@ -76,9 +76,9 @@ class User extends AbstractData
         return $this->email;
     }
 
-    public function setEmail(Email $email): User
+    public function setEmail(mixed $email): User
     {
-        $this->email = $email;
+        $this->email = new Email($email);
 
         return $this;
     }
@@ -88,9 +88,9 @@ class User extends AbstractData
         return $this->roles;
     }
 
-    public function setRoles(Roles $roles): User
+    public function setRoles(mixed $roles): User
     {
-        $this->roles = $roles;
+        $this->roles = new Roles($roles);
 
         return $this;
     }
@@ -100,9 +100,9 @@ class User extends AbstractData
         return $this->uuid;
     }
 
-    public function setUuid(Uuid $uuid): User
+    public function setUuid(mixed $uuid): User
     {
-        $this->uuid = $uuid;
+        $this->uuid = new Uuid($uuid);
 
         return $this;
     }

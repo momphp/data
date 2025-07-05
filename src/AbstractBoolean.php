@@ -18,6 +18,15 @@ abstract class AbstractBoolean extends AbstractValue
         return new static($value);
     }
 
+    public static function forArrayValue(AbstractValue $value): ?bool
+    {
+        if ($value instanceof AbstractBoolean) {
+            return $value->toNullableBoolean();
+        }
+
+        return null;
+    }
+
     public function toPrimitive(): ?bool
     {
         return $this->toNullableBoolean();

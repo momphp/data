@@ -18,6 +18,15 @@ abstract class AbstractDate extends AbstractValue
         return new static($value);
     }
 
+    public static function forArrayValue(AbstractValue $value): ?string
+    {
+        if ($value instanceof AbstractDate) {
+            return $value->toNullableISOString();
+        }
+
+        return null;
+    }
+
     public function toPrimitive(): ?Carbon
     {
         return $this->toNullableCarbon();

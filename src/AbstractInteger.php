@@ -16,6 +16,15 @@ abstract class AbstractInteger extends AbstractValue
         return new static($value);
     }
 
+    public static function forArrayValue(AbstractValue $value): ?int
+    {
+        if ($value instanceof AbstractInteger) {
+            return $value->toNullableInteger();
+        }
+
+        return null;
+    }
+
     public function toPrimitive(): ?int
     {
         return $this->toNullableInteger();

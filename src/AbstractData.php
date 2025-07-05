@@ -287,7 +287,24 @@ abstract class AbstractData implements Arrayable
 
     public function toArray(): array
     {
-        throw new RuntimeException('The toArray method must be implemented.');
+        $class = new ReflectionClass(static::class);
+
+        $data = collect($class->getProperties())
+            ->mapWithKeys(function (ReflectionProperty $property): array {
+                $propertyName = $property->name;
+
+                /** @var ReflectionNamedType $type */
+                $type = $property->getType();
+
+                /** @var AbstractValue $typeName */
+                $typeName = $type->getName();
+
+                return [$typeName::getName() => $typeName::forArrayValue($this->{$propertyName})];
+            })->toArray();
+
+        $data['class'] = static::class;
+
+        return $data;
     }
 
     public function forDatabaseCreate(): array

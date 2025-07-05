@@ -22,6 +22,8 @@ abstract class AbstractValue
 
     abstract public static function getName(): string;
 
+    abstract public static function forArrayValue(AbstractValue $value): mixed;
+
     public static function fromEloquentModel(Model $model): static
     {
         $value = $model->getAttributes()[static::getDatabaseTableColumnName()] ?? null;

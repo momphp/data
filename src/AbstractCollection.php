@@ -28,6 +28,15 @@ abstract class AbstractCollection extends AbstractValue
         return new static($value);
     }
 
+    public static function forArrayValue(AbstractValue $value): ?array
+    {
+        if ($value instanceof AbstractCollection) {
+            return $value->toNullableArray();
+        }
+
+        return null;
+    }
+
     public function toPrimitive(): ?Collection
     {
         return $this->toNullableCollection();
