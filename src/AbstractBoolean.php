@@ -18,13 +18,38 @@ abstract class AbstractBoolean extends AbstractValue
         return new static($value);
     }
 
-    public static function forArrayValue(AbstractValue $value): ?bool
+    public static function forArrayValue(AbstractValue $value, AbstractData $data): ?bool
     {
         if ($value instanceof AbstractBoolean) {
-            return $value->toNullableBoolean();
+            return $value->toBoolean();
         }
 
         return null;
+    }
+
+    public static function forEncryptedArrayValue(AbstractValue $value, AbstractData $data): ?bool
+    {
+        return static::forArrayValue($value, $data);
+    }
+
+    public static function forResourceValue(AbstractValue $value, AbstractData $data): ?bool
+    {
+        return static::forArrayValue($value, $data);
+    }
+
+    public static function forDatabaseCreateValue(AbstractValue $value, AbstractData $data): ?bool
+    {
+        return static::forArrayValue($value, $data);
+    }
+
+    public static function forDatabaseUpdateValue(AbstractValue $value, AbstractData $data): ?bool
+    {
+        return static::forArrayValue($value, $data);
+    }
+
+    public static function forEloquentFactoryValue(AbstractValue $value): bool
+    {
+        return fake()->boolean();
     }
 
     public function toPrimitive(): ?bool

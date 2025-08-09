@@ -8,11 +8,22 @@ use BackedEnum;
 use Closure;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Hash;
 
 abstract class AbstractValue
 {
     private mixed $data = null;
+
+    private bool $includeInToArray = true;
+
+    private bool $includeInForDatabaseCreate = true;
+
+    private bool $includeInForDatabaseUpdate = true;
+
+    private bool $includeInForResource = true;
+
+    private bool $includeInEloquentFactory = true;
 
     final public function __construct(
         protected readonly mixed $value = null,
@@ -22,7 +33,17 @@ abstract class AbstractValue
 
     abstract public static function getName(): string;
 
-    abstract public static function forArrayValue(AbstractValue $value): mixed;
+    abstract public static function forArrayValue(AbstractValue $value, AbstractData $data): mixed;
+
+    abstract public static function forEncryptedArrayValue(AbstractValue $value, AbstractData $data): mixed;
+
+    abstract public static function forResourceValue(AbstractValue $value, AbstractData $data): mixed;
+
+    abstract public static function forDatabaseCreateValue(AbstractValue $value, AbstractData $data): mixed;
+
+    abstract public static function forDatabaseUpdateValue(AbstractValue $value, AbstractData $data): mixed;
+
+    abstract public static function forEloquentFactoryValue(AbstractValue $value): mixed;
 
     public static function fromEloquentModel(Model $model): static
     {
@@ -32,16 +53,14 @@ abstract class AbstractValue
             $value = json_decode($value, true);
         }
 
-        return (new static(value: $value))
-            ->setData($model);
+        return new static(value: $value)->setData($model);
     }
 
     public static function fromDataArray(array $item): static
     {
         $value = $item[static::getName()] ?? null;
 
-        return (new static(value: $value))
-            ->setData($item);
+        return new static(value: $value)->setData($item);
     }
 
     public static function getDatabaseTableColumnName(): string
@@ -125,8 +144,11 @@ abstract class AbstractValue
         return "{$table}_" . static::getName();
     }
 
-    public static function getNameForValidation(?string $parent = null, bool $isArray = false, bool $associative = false): string
-    {
+    public static function getNameForValidation(
+        ?string $parent = null,
+        bool $isArray = false,
+        bool $associative = false,
+    ): string {
         if (null === $parent && false === $isArray) {
             return static::getName();
         }
@@ -153,6 +175,66 @@ abstract class AbstractValue
         }
 
         return $parent . '.*.' . static::getName() . '.' . $rule;
+    }
+
+    public function isIncludeInToArray(): bool
+    {
+        return $this->includeInToArray;
+    }
+
+    public function setIncludeInToArray(bool $includeInToArray): AbstractValue
+    {
+        $this->includeInToArray = $includeInToArray;
+
+        return $this;
+    }
+
+    public function isIncludeInForDatabaseCreate(): bool
+    {
+        return $this->includeInForDatabaseCreate;
+    }
+
+    public function setIncludeInForDatabaseCreate(bool $includeInForDatabaseCreate): AbstractValue
+    {
+        $this->includeInForDatabaseCreate = $includeInForDatabaseCreate;
+
+        return $this;
+    }
+
+    public function isIncludeInForDatabaseUpdate(): bool
+    {
+        return $this->includeInForDatabaseUpdate;
+    }
+
+    public function setIncludeInForDatabaseUpdate(bool $includeInForDatabaseUpdate): AbstractValue
+    {
+        $this->includeInForDatabaseUpdate = $includeInForDatabaseUpdate;
+
+        return $this;
+    }
+
+    public function isIncludeInForResource(): bool
+    {
+        return $this->includeInForResource;
+    }
+
+    public function setIncludeInForResource(bool $includeInForResource): AbstractValue
+    {
+        $this->includeInForResource = $includeInForResource;
+
+        return $this;
+    }
+
+    public function isIncludeInEloquentFactory(): bool
+    {
+        return $this->includeInEloquentFactory;
+    }
+
+    public function setIncludeInEloquentFactory(bool $includeInEloquentFactory): AbstractValue
+    {
+        $this->includeInEloquentFactory = $includeInEloquentFactory;
+
+        return $this;
     }
 
     public function getData(): mixed
@@ -182,6 +264,14 @@ abstract class AbstractValue
     public function toEncrypted(): string
     {
         $value = $this->toPrimitive();
+
+        if ($value instanceof Collection) {
+            $value = $value->toArray();
+        }
+
+        if (is_array($value)) {
+            $value = json_encode($value);
+        }
 
         try {
             return encrypt(decrypt($value));

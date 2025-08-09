@@ -12,6 +12,8 @@ use Mom\Data\Tests\Unit\User\Properties\Balance;
 use Mom\Data\Tests\Unit\User\Properties\CreatedAt;
 use Mom\Data\Tests\Unit\User\Properties\Email;
 use Mom\Data\Tests\Unit\User\Properties\Roles;
+use Mom\Data\Tests\Unit\User\Properties\Status;
+use Mom\Data\Tests\Unit\User\Properties\Type;
 use Mom\Data\Tests\Unit\User\Properties\Uuid;
 
 class User extends AbstractData
@@ -22,6 +24,8 @@ class User extends AbstractData
         public CreatedAt $createdAt,
         public Email $email,
         public Roles $roles,
+        public Status $status,
+        public Type $type,
         public Uuid $uuid,
     ) {}
 
@@ -91,6 +95,30 @@ class User extends AbstractData
     public function setRoles(mixed $roles): User
     {
         $this->roles = new Roles($roles);
+
+        return $this;
+    }
+
+    public function getStatus(): Status
+    {
+        return $this->status;
+    }
+
+    public function setStatus(mixed $status): User
+    {
+        $this->status = new Status($status);
+
+        return $this;
+    }
+
+    public function getType(): Type
+    {
+        return $this->type;
+    }
+
+    public function setType(mixed $type): User
+    {
+        $this->type = new Type($type);
 
         return $this;
     }

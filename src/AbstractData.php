@@ -9,6 +9,7 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Collection;
 use ReflectionClass;
@@ -52,8 +53,12 @@ abstract class AbstractData implements Arrayable
             ->setEloquentModel($model);
     }
 
-    public static function fakeCollection(array $attributes = [], int $count = 2, array $with = [], bool $persist = true): Collection
-    {
+    public static function fakeCollection(
+        array $attributes = [],
+        int $count = 2,
+        array $with = [],
+        bool $persist = true,
+    ): Collection {
         $factory = static::getFactory();
 
         if (null === $factory) {
@@ -129,7 +134,7 @@ abstract class AbstractData implements Arrayable
             })->toArray();
 
         /** @phpstan-ignore-next-line */
-        return (new static(...$properties))->setEloquentModel($model);
+        return new static(...$properties)->setEloquentModel($model);
     }
 
     public static function fromData(AbstractData $data, string $method = 'fromData', mixed $options = null): static
@@ -224,6 +229,32 @@ abstract class AbstractData implements Arrayable
         return static::new();
     }
 
+    public function forEloquentFactory(): array
+    {
+        $class = new ReflectionClass(static::class);
+
+        return collect($class->getProperties())
+            ->filter(function (ReflectionProperty $property): bool {
+                $propertyName = $property->name;
+
+                /** @var AbstractValue $propertyInstance */
+                $propertyInstance = $this->{$propertyName};
+
+                return $propertyInstance->isIncludeInEloquentFactory();
+            })
+            ->mapWithKeys(function (ReflectionProperty $property): array {
+                $propertyName = $property->name;
+
+                /** @var ReflectionNamedType $type */
+                $type = $property->getType();
+
+                /** @var AbstractValue $typeName */
+                $typeName = $type->getName();
+
+                return [$typeName::getName() => $typeName::forEloquentFactoryValue($this->{$propertyName})];
+            })->toArray();
+    }
+
     public function getPrimaryKey(): AbstractValue
     {
         throw new RuntimeException('The getPrimaryKey method must be implemented.');
@@ -290,6 +321,14 @@ abstract class AbstractData implements Arrayable
         $class = new ReflectionClass(static::class);
 
         $data = collect($class->getProperties())
+            ->filter(function (ReflectionProperty $property): bool {
+                $propertyName = $property->name;
+
+                /** @var AbstractValue $propertyInstance */
+                $propertyInstance = $this->{$propertyName};
+
+                return $propertyInstance->isIncludeInToArray();
+            })
             ->mapWithKeys(function (ReflectionProperty $property): array {
                 $propertyName = $property->name;
 
@@ -299,7 +338,7 @@ abstract class AbstractData implements Arrayable
                 /** @var AbstractValue $typeName */
                 $typeName = $type->getName();
 
-                return [$typeName::getName() => $typeName::forArrayValue($this->{$propertyName})];
+                return [$typeName::getName() => $typeName::forArrayValue($this->{$propertyName}, $this)];
             })->toArray();
 
         $data['class'] = static::class;
@@ -309,22 +348,114 @@ abstract class AbstractData implements Arrayable
 
     public function forDatabaseCreate(): array
     {
-        throw new RuntimeException('The toResource method must be implemented.');
+        $class = new ReflectionClass(static::class);
+
+        return collect($class->getProperties())
+            ->filter(function (ReflectionProperty $property): bool {
+                $propertyName = $property->name;
+
+                /** @var AbstractValue $propertyInstance */
+                $propertyInstance = $this->{$propertyName};
+
+                return $propertyInstance->isIncludeInForDatabaseCreate();
+            })
+            ->mapWithKeys(function (ReflectionProperty $property): array {
+                $propertyName = $property->name;
+
+                /** @var ReflectionNamedType $type */
+                $type = $property->getType();
+
+                /** @var AbstractValue $typeName */
+                $typeName = $type->getName();
+
+                return [$typeName::getName() => $typeName::forDatabaseCreateValue($this->{$propertyName}, $this)];
+            })->toArray();
     }
 
     public function forDatabaseUpdate(): array
     {
-        throw new RuntimeException('The toResource method must be implemented.');
+        $class = new ReflectionClass(static::class);
+
+        return collect($class->getProperties())
+            ->filter(function (ReflectionProperty $property): bool {
+                $propertyName = $property->name;
+
+                /** @var AbstractValue $propertyInstance */
+                $propertyInstance = $this->{$propertyName};
+
+                return $propertyInstance->isIncludeInForDatabaseUpdate();
+            })
+            ->mapWithKeys(function (ReflectionProperty $property): array {
+                $propertyName = $property->name;
+
+                /** @var ReflectionNamedType $type */
+                $type = $property->getType();
+
+                /** @var AbstractValue $typeName */
+                $typeName = $type->getName();
+
+                return [$typeName::getName() => $typeName::forDatabaseUpdateValue($this->{$propertyName}, $this)];
+            })->toArray();
     }
 
     public function toEncryptedArray(): array
     {
-        throw new RuntimeException('The toEncryptedArray method must be implemented.');
+        $class = new ReflectionClass(static::class);
+
+        $data = collect($class->getProperties())
+            ->filter(function (ReflectionProperty $property): bool {
+                $propertyName = $property->name;
+
+                /** @var AbstractValue $propertyInstance */
+                $propertyInstance = $this->{$propertyName};
+
+                return $propertyInstance->isIncludeInToArray();
+            })
+            ->mapWithKeys(function (ReflectionProperty $property): array {
+                $propertyName = $property->name;
+
+                /** @var ReflectionNamedType $type */
+                $type = $property->getType();
+
+                /** @var AbstractValue $typeName */
+                $typeName = $type->getName();
+
+                return [$typeName::getName() => $typeName::forEncryptedArrayValue($this->{$propertyName}, $this)];
+            })->toArray();
+
+        $data['class'] = static::class;
+
+        return $data;
     }
 
-    public function forResource(): array
+    public function forResource(Request $request): array
     {
-        throw new RuntimeException('The forResource method must be implemented.');
+        $class = new ReflectionClass(static::class);
+
+        $data = collect($class->getProperties())
+            ->filter(function (ReflectionProperty $property): bool {
+                $propertyName = $property->name;
+
+                /** @var AbstractValue $propertyInstance */
+                $propertyInstance = $this->{$propertyName};
+
+                return $propertyInstance->isIncludeInForResource();
+            })
+            ->mapWithKeys(function (ReflectionProperty $property): array {
+                $propertyName = $property->name;
+
+                /** @var ReflectionNamedType $type */
+                $type = $property->getType();
+
+                /** @var AbstractValue $typeName */
+                $typeName = $type->getName();
+
+                return [$typeName::getName() => $typeName::forResourceValue($this->{$propertyName}, $this)];
+            })->toArray();
+
+        $data['class'] = static::class;
+
+        return $data;
     }
 
     public function toResource(): JsonResource

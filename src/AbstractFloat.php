@@ -16,13 +16,42 @@ abstract class AbstractFloat extends AbstractValue
         return new static($value);
     }
 
-    public static function forArrayValue(AbstractValue $value): ?float
+    public static function forArrayValue(AbstractValue $value, AbstractData $data): ?float
     {
         if ($value instanceof AbstractFloat) {
             return $value->toNullableFloat();
         }
 
         return null;
+    }
+
+    public static function forEncryptedArrayValue(AbstractValue $value, AbstractData $data): mixed
+    {
+        if ($value instanceof AbstractFloat) {
+            return $value->toNullableEncrypted();
+        }
+
+        return null;
+    }
+
+    public static function forResourceValue(AbstractValue $value, AbstractData $data): ?float
+    {
+        return static::forArrayValue($value, $data);
+    }
+
+    public static function forDatabaseCreateValue(AbstractValue $value, AbstractData $data): ?float
+    {
+        return static::forArrayValue($value, $data);
+    }
+
+    public static function forDatabaseUpdateValue(AbstractValue $value, AbstractData $data): ?float
+    {
+        return static::forArrayValue($value, $data);
+    }
+
+    public static function forEloquentFactoryValue(AbstractValue $value): ?float
+    {
+        return fake()->randomFloat();
     }
 
     public function toPrimitive(): ?float

@@ -16,13 +16,42 @@ abstract class AbstractInteger extends AbstractValue
         return new static($value);
     }
 
-    public static function forArrayValue(AbstractValue $value): ?int
+    public static function forArrayValue(AbstractValue $value, AbstractData $data): ?int
     {
         if ($value instanceof AbstractInteger) {
             return $value->toNullableInteger();
         }
 
         return null;
+    }
+
+    public static function forEncryptedArrayValue(AbstractValue $value, AbstractData $data): ?string
+    {
+        if ($value instanceof AbstractInteger) {
+            return $value->toNullableEncrypted();
+        }
+
+        return null;
+    }
+
+    public static function forResourceValue(AbstractValue $value, AbstractData $data): ?int
+    {
+        return static::forArrayValue($value, $data);
+    }
+
+    public static function forDatabaseCreateValue(AbstractValue $value, AbstractData $data): ?int
+    {
+        return static::forArrayValue($value, $data);
+    }
+
+    public static function forDatabaseUpdateValue(AbstractValue $value, AbstractData $data): ?int
+    {
+        return static::forArrayValue($value, $data);
+    }
+
+    public static function forEloquentFactoryValue(AbstractValue $value): ?int
+    {
+        return fake()->randomNumber();
     }
 
     public function toPrimitive(): ?int

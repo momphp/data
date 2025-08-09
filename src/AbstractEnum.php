@@ -20,13 +20,42 @@ abstract class AbstractEnum extends AbstractValue
         return new static(value: $value);
     }
 
-    public static function forArrayValue(AbstractValue $value): ?string
+    public static function forArrayValue(AbstractValue $value, AbstractData $data): string|int|null
     {
         if ($value instanceof AbstractEnum) {
-            return $value->toNullableString();
+            return $value->toNullableIntOrString();
         }
 
         return null;
+    }
+
+    public static function forEncryptedArrayValue(AbstractValue $value, AbstractData $data): ?string
+    {
+        if ($value instanceof AbstractEnum) {
+            return $value->toNullableEncrypted();
+        }
+
+        return null;
+    }
+
+    public static function forResourceValue(AbstractValue $value, AbstractData $data): ?string
+    {
+        return static::forArrayValue($value, $data);
+    }
+
+    public static function forDatabaseCreateValue(AbstractValue $value, AbstractData $data): ?string
+    {
+        return static::forArrayValue($value, $data);
+    }
+
+    public static function forDatabaseUpdateValue(AbstractValue $value, AbstractData $data): ?string
+    {
+        return static::forArrayValue($value, $data);
+    }
+
+    public static function forEloquentFactoryValue(AbstractValue $value): ?string
+    {
+        return fake()->word();
     }
 
     public static function fromArray(array $item): static
@@ -70,6 +99,17 @@ abstract class AbstractEnum extends AbstractValue
         return (string) $enum->value;
     }
 
+    public function toNullableIntOrString(): string|int|null
+    {
+        $enum = $this->toNullableEnum();
+
+        if (null === $enum) {
+            return null;
+        }
+
+        return $enum->value;
+    }
+
     public function toString(): string
     {
         return (string) $this->toEnum()->value;
@@ -85,9 +125,9 @@ abstract class AbstractEnum extends AbstractValue
         return (int) $this->toString();
     }
 
-    public function toPrimitive(): ?string
+    public function toPrimitive(): string|int|null
     {
-        return $this->toNullableString();
+        return $this->toNullableIntOrString();
     }
 
     public function isNull(): bool

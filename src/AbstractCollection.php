@@ -28,13 +28,42 @@ abstract class AbstractCollection extends AbstractValue
         return new static($value);
     }
 
-    public static function forArrayValue(AbstractValue $value): ?array
+    public static function forArrayValue(AbstractValue $value, AbstractData $data): ?array
     {
         if ($value instanceof AbstractCollection) {
             return $value->toNullableArray();
         }
 
         return null;
+    }
+
+    public static function forEncryptedArrayValue(AbstractValue $value, AbstractData $data): ?string
+    {
+        if ($value instanceof AbstractCollection) {
+            return $value->toNullableEncrypted();
+        }
+
+        return null;
+    }
+
+    public static function forResourceValue(AbstractValue $value, AbstractData $data): ?array
+    {
+        return static::forArrayValue($value, $data);
+    }
+
+    public static function forDatabaseCreateValue(AbstractValue $value, AbstractData $data): ?array
+    {
+        return static::forArrayValue($value, $data);
+    }
+
+    public static function forDatabaseUpdateValue(AbstractValue $value, AbstractData $data): ?array
+    {
+        return static::forArrayValue($value, $data);
+    }
+
+    public static function forEloquentFactoryValue(AbstractValue $value): ?array
+    {
+        return [];
     }
 
     public function toPrimitive(): ?Collection
