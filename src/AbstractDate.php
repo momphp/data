@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace Mom\Data;
 
-use Illuminate\Support\Carbon;
+use Carbon\CarbonImmutable;
 
 abstract class AbstractDate extends AbstractValue
 {
-    public static function fromCarbon(Carbon $value): static
+    public static function fromCarbon(CarbonImmutable $value): static
     {
         return new static($value);
     }
 
-    public static function fromNullableCarbon(?Carbon $value): static
+    public static function fromNullableCarbon(?CarbonImmutable $value): static
     {
         return new static($value);
     }
@@ -60,21 +60,21 @@ abstract class AbstractDate extends AbstractValue
         return fake()->dateTime()->format('Y-m-d H:i:s');
     }
 
-    public function toPrimitive(): ?Carbon
+    public function toPrimitive(): ?CarbonImmutable
     {
         return $this->toNullableCarbon();
     }
 
-    public function toNullableCarbon(): ?Carbon
+    public function toNullableCarbon(): ?CarbonImmutable
     {
         $value = $this->toValue();
 
-        if ($value instanceof Carbon) {
+        if ($value instanceof CarbonImmutable) {
             return $value;
         }
 
         if (is_string($value)) {
-            return Carbon::parse($value);
+            return CarbonImmutable::parse($value);
         }
 
         if ($value instanceof AbstractDate) {
@@ -84,9 +84,9 @@ abstract class AbstractDate extends AbstractValue
         return null;
     }
 
-    public function toCarbon(): Carbon
+    public function toCarbon(): CarbonImmutable
     {
-        return $this->toNullableCarbon() ?? Carbon::now();
+        return $this->toNullableCarbon() ?? CarbonImmutable::now();
     }
 
     public function toNullableDateTimeString(): ?string

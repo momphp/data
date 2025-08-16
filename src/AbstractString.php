@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Mom\Data;
 
+use Ramsey\Uuid\UuidInterface;
+
 abstract class AbstractString extends AbstractValue
 {
     public static function fromString(string $value): static
@@ -65,6 +67,14 @@ abstract class AbstractString extends AbstractValue
 
         if (is_string($value)) {
             return $value;
+        }
+
+        if ($value instanceof UuidInterface) {
+            return $value->toString();
+        }
+
+        if ($value instanceof AbstractString) {
+            return $value->toNullableString();
         }
 
         return null;

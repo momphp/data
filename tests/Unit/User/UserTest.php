@@ -51,7 +51,7 @@ test('fake method', function (): void {
 test('toArray method', function (): void {
     $age = fake()->randomNumber();
     $balance = fake()->randomFloat();
-    $createdAt = now();
+    $createdAt = now()->toImmutable();
     $email = fake()->safeEmail();
     $status = StatusEnum::Active;
     $type = UserTypeEnum::Admin;

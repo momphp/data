@@ -316,6 +316,9 @@ abstract class AbstractData implements Arrayable
         return false === $this->isExistsInDatabase();
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function toArray(): array
     {
         $class = new ReflectionClass(static::class);
@@ -346,6 +349,9 @@ abstract class AbstractData implements Arrayable
         return $data;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function forDatabaseCreate(): array
     {
         $class = new ReflectionClass(static::class);
@@ -372,6 +378,9 @@ abstract class AbstractData implements Arrayable
             })->toArray();
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function forDatabaseUpdate(): array
     {
         $class = new ReflectionClass(static::class);
@@ -398,6 +407,9 @@ abstract class AbstractData implements Arrayable
             })->toArray();
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function toEncryptedArray(): array
     {
         $class = new ReflectionClass(static::class);
@@ -428,6 +440,9 @@ abstract class AbstractData implements Arrayable
         return $data;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function forResource(Request $request): array
     {
         $class = new ReflectionClass(static::class);
