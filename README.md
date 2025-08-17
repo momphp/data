@@ -156,11 +156,11 @@ use App\User\Properties\Password;
 class User extends AbstractData
 {
     public function __construct(
-        private Uuid $uuid,
-        private FirstName $firstName,
-        private LastName $lastName,
-        private Email $email,
-        private Password $password
+        public Uuid $uuid,
+        public FirstName $firstName,
+        public LastName $lastName,
+        public Email $email,
+        public Password $password
     ) {}
     
     public function getUuid(): Uuid
