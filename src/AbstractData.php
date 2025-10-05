@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Mom\Data;
 
 use BackedEnum;
-use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Model;
@@ -18,19 +17,30 @@ use ReflectionProperty;
 use RuntimeException;
 use stdClass;
 
+/**
+ * @template TModel of \Illuminate\Database\Eloquent\Model
+ */
 abstract class AbstractData implements Arrayable
 {
-    private Model|Authenticatable|null $eloquentModel = null;
+    /** @var TModel|null */
+    private ?Model $eloquentModel = null;
 
     private ?BackedEnum $morphAlias = null;
 
     private bool $existsInDatabase = false;
 
+    /**
+     * @return Factory<TModel>|null
+     */
     public static function getFactory(): ?Factory
     {
         return null;
     }
 
+    /**
+     * @param  array<string, mixed>  $attributes
+     * @param  array<string>  $with
+     */
     public static function fake(array $attributes = [], array $with = [], bool $persist = true): static
     {
         $factory = static::getFactory();
@@ -53,6 +63,11 @@ abstract class AbstractData implements Arrayable
             ->setEloquentModel($model);
     }
 
+    /**
+     * @param  array<string, mixed>  $attributes
+     * @param  array<string>  $with
+     * @return Collection<int, static>
+     */
     public static function fakeCollection(
         array $attributes = [],
         int $count = 2,
@@ -95,6 +110,9 @@ abstract class AbstractData implements Arrayable
         return new static(...$properties);
     }
 
+    /**
+     * @param  array<string, mixed>  $item
+     */
     public static function fromArray(array $item): static
     {
         $class = new ReflectionClass(static::class);
@@ -114,6 +132,9 @@ abstract class AbstractData implements Arrayable
         return new static(...$properties);
     }
 
+    /**
+     * @param  TModel|null  $model
+     */
     public static function fromEloquentModel(?Model $model): static
     {
         if (null === $model) {
@@ -185,6 +206,10 @@ abstract class AbstractData implements Arrayable
         return new static(...$properties);
     }
 
+    /**
+     * @param  Collection<int, mixed>|array<int, mixed>  $items
+     * @return Collection<int, static>
+     */
     public static function collect(Collection|array $items, string $method = 'fromData'): Collection
     {
         if (is_array($items)) {
@@ -212,7 +237,10 @@ abstract class AbstractData implements Arrayable
         });
     }
 
-    public static function from($item): static
+    /**
+     * @param  TModel|array<string, mixed>|AbstractData|mixed  $item
+     */
+    public static function from(mixed $item): static
     {
         if ($item instanceof Model) {
             return static::fromEloquentModel($item);
@@ -229,6 +257,9 @@ abstract class AbstractData implements Arrayable
         return static::new();
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function forEloquentFactory(): array
     {
         $class = new ReflectionClass(static::class);
@@ -265,6 +296,9 @@ abstract class AbstractData implements Arrayable
         return $this->morphAlias;
     }
 
+    /**
+     * @return $this
+     */
     public function setMorphAlias(?BackedEnum $morphAlias): AbstractData
     {
         $this->morphAlias = $morphAlias;
@@ -272,11 +306,21 @@ abstract class AbstractData implements Arrayable
         return $this;
     }
 
-    public function getEloquentModel(): Model|Authenticatable|null
+    /**
+     * Get the Eloquent model instance.
+     *
+     * @return TModel|null
+     */
+    public function getEloquentModel(): ?Model
     {
         return $this->eloquentModel;
     }
 
+    /**
+     * Set the Eloquent model instance.
+     *
+     * @param  TModel  $eloquentModel
+     */
     public function setEloquentModel(Model $eloquentModel): static
     {
         $this->eloquentModel = $eloquentModel;
@@ -294,7 +338,7 @@ abstract class AbstractData implements Arrayable
         return false === $this->isNull();
     }
 
-    public function toJson($options = 0): string
+    public function toJson(int $options = 0): string
     {
         return json_encode($this->toArray(), $options);
     }
