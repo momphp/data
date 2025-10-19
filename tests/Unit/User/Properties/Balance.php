@@ -8,6 +8,8 @@ use Mom\Data\AbstractFloat;
 
 class Balance extends AbstractFloat
 {
+    protected static bool $isVisible = false;
+
     public static function getName(): string
     {
         return 'balance';

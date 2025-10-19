@@ -11,10 +11,13 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Gate;
 use ReflectionClass;
+use ReflectionMethod;
 use ReflectionNamedType;
 use ReflectionProperty;
 use RuntimeException;
+use Spatie\QueryBuilder\AllowedFilter;
 use stdClass;
 
 /**
@@ -255,6 +258,257 @@ abstract class AbstractData implements Arrayable
         }
 
         return static::new();
+    }
+
+    public static function allowedFields(
+        ?string $prefix = null,
+        mixed $context = null,
+        ?string $modelClass = null
+    ): array {
+        $reflection = new ReflectionClass(static::class);
+        $constructor = $reflection->getConstructor();
+        if ( ! $constructor) {
+            return [];
+        }
+
+        $fields = [];
+
+        foreach ($constructor->getParameters() as $param) {
+            $type = $param->getType();
+
+            if ( ! $type instanceof ReflectionNamedType) {
+                continue;
+            }
+
+            $className = $type->getName();
+            $paramName = $param->getName();
+
+            // Nested Data
+            if (is_subclass_of($className, self::class)) {
+                $relation = $className::getRelationName() ?? $paramName;
+
+                $nested = $className::allowedFields($relation, $context, $modelClass);
+                $fields = array_merge($fields, $nested);
+
+                continue;
+            }
+
+            if ( ! class_exists($className)) {
+                continue;
+            }
+
+            // Property-level check
+            if (method_exists($className, 'isAllowedField')) {
+                $ref = new ReflectionMethod($className, 'isAllowedField');
+                $allowed = $ref->getNumberOfParameters() > 0
+                    ? $className::isAllowedField($context)
+                    : $className::isAllowedField();
+
+                if ( ! $allowed) {
+                    continue;
+                }
+            }
+
+            $name = self::resolveColumnName($className, $paramName);
+
+            // Gate policy
+            if (Gate::has('viewField') && ! Gate::allows('viewField', [$modelClass, $name])) {
+                continue;
+            }
+
+            $fields[] = $prefix ? "{$prefix}.{$name}" : $name;
+        }
+
+        return $fields;
+    }
+
+    public static function allowedIncludes(
+        ?string $prefix = null,
+        mixed $context = null,
+        ?string $modelClass = null
+    ): array {
+        $reflection = new ReflectionClass(static::class);
+        $constructor = $reflection->getConstructor();
+        if ( ! $constructor) {
+            return [];
+        }
+
+        $includes = [];
+
+        foreach ($constructor->getParameters() as $param) {
+            $type = $param->getType();
+            if ( ! $type instanceof ReflectionNamedType) {
+                continue;
+            }
+
+            $className = $type->getName();
+            $paramName = $param->getName();
+
+            if (is_subclass_of($className, self::class) || is_subclass_of($className, AbstractCollection::class)) {
+                $relation = $className::getRelationName() ?? $paramName;
+
+                if (method_exists($className, 'isAllowedInclude')) {
+                    $ref = new ReflectionMethod($className, 'isAllowedInclude');
+                    $allowed = $ref->getNumberOfParameters() > 0
+                        ? $className::isAllowedInclude($context)
+                        : $className::isAllowedInclude();
+                    if ( ! $allowed) {
+                        continue;
+                    }
+                }
+
+                if (Gate::has('viewInclude') && ! Gate::allows('viewInclude', [$modelClass, $relation])) {
+                    continue;
+                }
+
+                $include = $prefix ? "{$prefix}.{$relation}" : $relation;
+                $includes[] = $include;
+
+                if (is_subclass_of($className, self::class)) {
+                    $nested = $className::allowedIncludes($include, $context, $modelClass);
+                    $includes = array_merge($includes, $nested);
+                }
+            }
+        }
+
+        return $includes;
+    }
+
+    public static function allowedSorts(
+        ?string $prefix = null,
+        mixed $context = null,
+        ?string $modelClass = null
+    ): array {
+        $reflection = new ReflectionClass(static::class);
+        $constructor = $reflection->getConstructor();
+        if ( ! $constructor) {
+            return [];
+        }
+
+        $sorts = [];
+
+        foreach ($constructor->getParameters() as $param) {
+            $type = $param->getType();
+            if ( ! $type instanceof ReflectionNamedType) {
+                continue;
+            }
+
+            $className = $type->getName();
+            $paramName = $param->getName();
+
+            // Nested data
+            if (is_subclass_of($className, self::class)) {
+                $relation = $className::getRelationName() ?? $paramName;
+
+                $nested = $className::allowedSorts($relation, $context, $modelClass);
+                $sorts = array_merge($sorts, $nested);
+
+                continue;
+            }
+
+            if ( ! class_exists($className)) {
+                continue;
+            }
+
+            $sortable = true;
+            if (method_exists($className, 'isSortable')) {
+                $sortable = $className::isSortable();
+            } elseif (method_exists($className, 'isAllowedSort')) {
+                $ref = new ReflectionMethod($className, 'isAllowedSort');
+                $sortable = $ref->getNumberOfParameters() > 0
+                    ? $className::isAllowedSort($context)
+                    : $className::isAllowedSort();
+            }
+            if ( ! $sortable) {
+                continue;
+            }
+
+            $name = self::resolveColumnName($className, $paramName);
+
+            if (Gate::has('sortField') && ! Gate::allows('sortField', [$modelClass, $name])) {
+                continue;
+            }
+
+            $sorts[] = $prefix ? "{$prefix}.{$name}" : $name;
+        }
+
+        return $sorts;
+    }
+
+    public static function allowedFilters(
+        ?string $prefix = null,
+        mixed $context = null,
+        ?string $modelClass = null
+    ): array {
+        $reflection = new ReflectionClass(static::class);
+        $constructor = $reflection->getConstructor();
+        if ( ! $constructor) {
+            return [];
+        }
+
+        $filters = [];
+
+        foreach ($constructor->getParameters() as $param) {
+            $type = $param->getType();
+            if ( ! $type instanceof ReflectionNamedType) {
+                continue;
+            }
+
+            $className = $type->getName();
+            $paramName = $param->getName();
+
+            // Nested data
+            if (is_subclass_of($className, self::class)) {
+                $relation = $className::getRelationName() ?? $paramName;
+
+                $nested = $className::allowedFilters($relation, $context, $modelClass);
+                $filters = array_merge($filters, $nested);
+
+                continue;
+            }
+
+            if ( ! class_exists($className)) {
+                continue;
+            }
+
+            // Property-level control
+            $filterable = true;
+            if (method_exists($className, 'isFilterable')) {
+                $filterable = $className::isFilterable();
+            } elseif (method_exists($className, 'isAllowedFilter')) {
+                $ref = new ReflectionMethod($className, 'isAllowedFilter');
+                $filterable = $ref->getNumberOfParameters() > 0
+                    ? $className::isAllowedFilter($context)
+                    : $className::isAllowedFilter();
+            }
+
+            if ( ! $filterable) {
+                continue;
+            }
+
+            $name = self::resolveColumnName($className, $paramName);
+            $field = $prefix ? "{$prefix}.{$name}" : $name;
+
+            // Policy check
+            if (Gate::has('filterField') && ! Gate::allows('filterField', [$modelClass, $field])) {
+                continue;
+            }
+
+            // Use AllowedFilter for integration
+            if (method_exists($className, 'getCustomFilter')) {
+                $customFilter = $className::getCustomFilter();
+                $filters[] = AllowedFilter::custom($field, $customFilter);
+            } else {
+                $filters[] = AllowedFilter::exact($field);
+            }
+        }
+
+        return $filters;
+    }
+
+    public static function getRelationName(): ?string
+    {
+        return null;
     }
 
     /**
@@ -520,5 +774,14 @@ abstract class AbstractData implements Arrayable
     public function toResource(): JsonResource
     {
         throw new RuntimeException('The toResource method must be implemented.');
+    }
+
+    protected static function resolveColumnName(string $className, string $fallback): string
+    {
+        return method_exists($className, 'getDatabaseTableColumnName')
+            ? $className::getDatabaseTableColumnName()
+            : (method_exists($className, 'getName')
+                ? $className::getName()
+                : $fallback);
     }
 }

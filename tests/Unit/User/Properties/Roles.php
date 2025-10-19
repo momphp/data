@@ -8,6 +8,8 @@ use Mom\Data\AbstractCollection;
 
 class Roles extends AbstractCollection
 {
+    protected static bool $isIncludeAllowed = true;
+
     public static function getName(): string
     {
         return 'roles';

@@ -9,10 +9,19 @@ use Closure;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 
 abstract class AbstractValue
 {
+    protected static bool $isVisible = true;
+
+    protected static bool $isSortable = false;
+
+    protected static bool $isFilterable = false;
+
+    protected static bool $isIncludeAllowed = false;
+
     private mixed $data = null;
 
     private bool $includeInToArray = true;
@@ -45,6 +54,42 @@ abstract class AbstractValue
 
     abstract public static function forEloquentFactoryValue(AbstractValue $value): mixed;
 
+    public static function isAllowedField(mixed $context = null): bool
+    {
+        if ( ! static::$isVisible) {
+            return false;
+        }
+
+        return static::checkPolicy('viewField', $context);
+    }
+
+    public static function isAllowedSort(mixed $context = null): bool
+    {
+        if ( ! static::$isSortable) {
+            return false;
+        }
+
+        return static::checkPolicy('sortField', $context);
+    }
+
+    public static function isAllowedFilter(mixed $context = null): bool
+    {
+        if ( ! static::$isFilterable) {
+            return false;
+        }
+
+        return static::checkPolicy('filterField', $context);
+    }
+
+    public static function isAllowedInclude(mixed $context = null): bool
+    {
+        if ( ! static::$isIncludeAllowed) {
+            return false;
+        }
+
+        return static::checkPolicy('viewInclude', $context);
+    }
+
     public static function fromEloquentModel(Model $model): static
     {
         $value = $model->getAttributes()[static::getDatabaseTableColumnName()] ?? null;
@@ -64,6 +109,11 @@ abstract class AbstractValue
     }
 
     public static function getDatabaseTableColumnName(): string
+    {
+        return static::getName();
+    }
+
+    public static function getRelationName(): string
     {
         return static::getName();
     }
@@ -330,5 +380,17 @@ abstract class AbstractValue
     public function equalsTo(mixed $value): bool
     {
         return $this->toValue() === $value;
+    }
+
+    /**
+     * Centralized Gate check.
+     */
+    protected static function checkPolicy(string $ability, mixed $context = null): bool
+    {
+        if ( ! class_exists(Gate::class) || ! Gate::has($ability)) {
+            return true;
+        }
+
+        return Gate::allows($ability, [$context, static::getDatabaseTableColumnName()]);
     }
 }
