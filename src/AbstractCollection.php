@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Mom\Data;
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 
 abstract class AbstractCollection extends AbstractValue
@@ -46,9 +47,13 @@ abstract class AbstractCollection extends AbstractValue
         return null;
     }
 
-    public static function forResourceValue(AbstractValue $value, AbstractData $data): ?array
+    public static function forResourceValue(AbstractValue $value, Request $request): ?array
     {
-        return static::forArrayValue($value, $data);
+        if ($value instanceof AbstractCollection) {
+            return $value->toNullableResource($request);
+        }
+
+        return null;
     }
 
     public static function forDatabaseCreateValue(AbstractValue $value, AbstractData $data): ?array
@@ -66,6 +71,24 @@ abstract class AbstractCollection extends AbstractValue
         return [];
     }
 
+    public function toResource(Request $request): array
+    {
+        return $this->toNullableResource($request) ?? [];
+    }
+
+    public function toNullableResource(Request $request): ?array
+    {
+        return $this->toNullableCollection()
+            ?->map(function (mixed $item) use ($request) {
+                if ($item instanceof AbstractData) {
+                    return $item->forResource($request);
+                }
+
+                return $item;
+            })
+            ?->toArray();
+    }
+
     public function toPrimitive(): ?Collection
     {
         return $this->toNullableCollection();
@@ -75,15 +98,19 @@ abstract class AbstractCollection extends AbstractValue
     {
         $value = $this->toValue();
 
-        if ($value instanceof Collection) {
+        if ($value instanceof Collection && $value->isNotEmpty()) {
             return $value;
         }
 
-        if (is_array($value)) {
+        if (is_array($value) && count($value) > 0) {
             return collect($value);
         }
 
-        if ($value instanceof AbstractCollection) {
+        if (is_string($value) && ! empty($value)) {
+            return collect([$value]);
+        }
+
+        if ($value instanceof self) {
             return $value->toNullableCollection();
         }
 

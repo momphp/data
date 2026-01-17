@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Mom\Data;
 
+use Illuminate\Http\Request;
+
 abstract class AbstractInteger extends AbstractValue
 {
     public static function fromInteger(int $value): static
@@ -34,9 +36,13 @@ abstract class AbstractInteger extends AbstractValue
         return null;
     }
 
-    public static function forResourceValue(AbstractValue $value, AbstractData $data): ?int
+    public static function forResourceValue(AbstractValue $value, Request $request): ?int
     {
-        return static::forArrayValue($value, $data);
+        if ($value instanceof AbstractInteger) {
+            return $value->toNullableInteger();
+        }
+
+        return null;
     }
 
     public static function forDatabaseCreateValue(AbstractValue $value, AbstractData $data): ?int

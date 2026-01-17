@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Mom\Data;
 
 use Carbon\CarbonImmutable;
+use Illuminate\Http\Request;
 
 abstract class AbstractDate extends AbstractValue
 {
@@ -36,9 +37,13 @@ abstract class AbstractDate extends AbstractValue
         return null;
     }
 
-    public static function forResourceValue(AbstractValue $value, AbstractData $data): ?string
+    public static function forResourceValue(AbstractValue $value, Request $request): ?string
     {
-        return static::forArrayValue($value, $data);
+        if ($value instanceof AbstractDate) {
+            return $value->toNullableISOString();
+        }
+
+        return null;
     }
 
     public static function forDatabaseCreateValue(AbstractValue $value, AbstractData $data): mixed

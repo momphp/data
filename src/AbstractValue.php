@@ -8,6 +8,7 @@ use BackedEnum;
 use Closure;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Hash;
 
@@ -39,7 +40,7 @@ abstract class AbstractValue
 
     abstract public static function forEncryptedArrayValue(AbstractValue $value, AbstractData $data): mixed;
 
-    abstract public static function forResourceValue(AbstractValue $value, AbstractData $data): mixed;
+    abstract public static function forResourceValue(AbstractValue $value, Request $request): mixed;
 
     abstract public static function forDatabaseCreateValue(AbstractValue $value, AbstractData $data): mixed;
 

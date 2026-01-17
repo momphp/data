@@ -6,6 +6,7 @@ namespace Mom\Data;
 
 use BackedEnum;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
 
 abstract class AbstractEnum extends AbstractValue
 {
@@ -38,9 +39,13 @@ abstract class AbstractEnum extends AbstractValue
         return null;
     }
 
-    public static function forResourceValue(AbstractValue $value, AbstractData $data): ?string
+    public static function forResourceValue(AbstractValue $value, Request $request): ?string
     {
-        return static::forArrayValue($value, $data);
+        if ($value instanceof AbstractEnum) {
+            return $value->toNullableString();
+        }
+
+        return null;
     }
 
     public static function forDatabaseCreateValue(AbstractValue $value, AbstractData $data): ?string

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Mom\Data;
 
+use Illuminate\Http\Request;
 use Ramsey\Uuid\UuidInterface;
 
 abstract class AbstractString extends AbstractValue
@@ -36,9 +37,13 @@ abstract class AbstractString extends AbstractValue
         return null;
     }
 
-    public static function forResourceValue(AbstractValue $value, AbstractData $data): ?string
+    public static function forResourceValue(AbstractValue $value, Request $request): ?string
     {
-        return static::forArrayValue($value, $data);
+        if ($value instanceof AbstractString) {
+            return $value->toNullableString();
+        }
+
+        return null;
     }
 
     public static function forDatabaseCreateValue(AbstractValue $value, AbstractData $data): ?string

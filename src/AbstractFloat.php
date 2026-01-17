@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Mom\Data;
 
+use Illuminate\Http\Request;
+
 abstract class AbstractFloat extends AbstractValue
 {
     public static function fromFloat(float $value): static
@@ -34,9 +36,13 @@ abstract class AbstractFloat extends AbstractValue
         return null;
     }
 
-    public static function forResourceValue(AbstractValue $value, AbstractData $data): ?float
+    public static function forResourceValue(AbstractValue $value, Request $request): ?float
     {
-        return static::forArrayValue($value, $data);
+        if ($value instanceof AbstractFloat) {
+            return $value->toNullableFloat();
+        }
+
+        return null;
     }
 
     public static function forDatabaseCreateValue(AbstractValue $value, AbstractData $data): ?float

@@ -418,6 +418,14 @@ abstract class AbstractData implements Arrayable
     }
 
     /**
+     * @return array<string, mixed>|null
+     */
+    public function toNullableArray(): ?array
+    {
+        return $this->isNull() ? null : $this->toArray();
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public function forDatabaseCreate(): array
@@ -528,7 +536,7 @@ abstract class AbstractData implements Arrayable
 
                 return $name::$includeInResponse;
             })
-            ->mapWithKeys(function (ReflectionProperty $property): array {
+            ->mapWithKeys(function (ReflectionProperty $property) use ($request): array {
                 $propertyName = $property->name;
 
                 /** @var ReflectionNamedType $type */
@@ -537,7 +545,7 @@ abstract class AbstractData implements Arrayable
                 /** @var AbstractValue $typeName */
                 $typeName = $type->getName();
 
-                return [$typeName::getName() => $typeName::forResourceValue($this->{$propertyName}, $this)];
+                return [$typeName::getName() => $typeName::forResourceValue($this->{$propertyName}, $request)];
             })->toArray();
 
         $data['class'] = static::class;

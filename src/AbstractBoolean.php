@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Mom\Data;
 
+use Illuminate\Http\Request;
+
 abstract class AbstractBoolean extends AbstractValue
 {
     abstract public function default(): bool;
@@ -32,9 +34,13 @@ abstract class AbstractBoolean extends AbstractValue
         return static::forArrayValue($value, $data);
     }
 
-    public static function forResourceValue(AbstractValue $value, AbstractData $data): ?bool
+    public static function forResourceValue(AbstractValue $value, Request $request): ?bool
     {
-        return static::forArrayValue($value, $data);
+        if ($value instanceof AbstractBoolean) {
+            return $value->toNullableBoolean();
+        }
+
+        return null;
     }
 
     public static function forDatabaseCreateValue(AbstractValue $value, AbstractData $data): ?bool

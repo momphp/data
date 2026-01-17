@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace Mom\Data;
 
 use Closure;
-use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Http\Request;
 
 abstract class AbstractDataValue extends AbstractValue
 {
-    abstract public function toNullableData(): mixed;
+    abstract public function toNullableData(): ?AbstractData;
 
-    abstract public function toData(): mixed;
+    abstract public function toData(): AbstractData;
 
     public static function new(): static
     {
@@ -41,9 +41,13 @@ abstract class AbstractDataValue extends AbstractValue
         return null;
     }
 
-    public static function forResourceValue(AbstractValue $value, AbstractData $data): ?array
+    public static function forResourceValue(AbstractValue $value, Request $request): ?array
     {
-        return static::forArrayValue($value, $data);
+        if ($value instanceof AbstractDataValue) {
+            return $value->toNullableResource($request);
+        }
+
+        return null;
     }
 
     public static function forDatabaseCreateValue(AbstractValue $value, AbstractData $data): ?array
@@ -68,13 +72,7 @@ abstract class AbstractDataValue extends AbstractValue
 
     public function toArray(): array
     {
-        $data = $this->toData();
-
-        if ($data instanceof AbstractData) {
-            return $data->toArray();
-        }
-
-        return [];
+        return $this->toData()->toArray();
     }
 
     public function toNullableArray(): ?array
@@ -104,18 +102,18 @@ abstract class AbstractDataValue extends AbstractValue
         return json_encode($this->toArray());
     }
 
-    public function toResource(): JsonResource
+    public function toResource(Request $request): array
     {
-        return $this->toData()->toResource();
+        return $this->toData()->forResource($request);
     }
 
-    public function toNullableResource(): ?JsonResource
+    public function toNullableResource(Request $request): ?array
     {
-        return $this->toNullableData()?->toResource();
+        return $this->toNullableData()?->forResource($request);
     }
 
     public function toPrimitive(): ?array
     {
-        return $this->toNullableData();
+        return $this->toNullableData()->toArray();
     }
 }
