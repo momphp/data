@@ -56,7 +56,7 @@ abstract class AbstractDataValue extends AbstractValue
         return static::forArrayValue($value, $data);
     }
 
-    public static function forEloquentFactoryValue(AbstractValue $value): ?array
+    public static function forEloquentFactoryValue(): ?array
     {
         return [];
     }

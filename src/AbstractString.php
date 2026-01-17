@@ -51,7 +51,7 @@ abstract class AbstractString extends AbstractValue
         return static::forDatabaseCreateValue($value, $data);
     }
 
-    public static function forEloquentFactoryValue(AbstractValue $value): ?string
+    public static function forEloquentFactoryValue(): ?string
     {
         return fake()->word();
     }

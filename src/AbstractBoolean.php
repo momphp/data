@@ -47,7 +47,7 @@ abstract class AbstractBoolean extends AbstractValue
         return static::forArrayValue($value, $data);
     }
 
-    public static function forEloquentFactoryValue(AbstractValue $value): bool
+    public static function forEloquentFactoryValue(): bool
     {
         return fake()->boolean();
     }

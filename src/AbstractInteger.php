@@ -49,7 +49,7 @@ abstract class AbstractInteger extends AbstractValue
         return static::forArrayValue($value, $data);
     }
 
-    public static function forEloquentFactoryValue(AbstractValue $value): ?int
+    public static function forEloquentFactoryValue(): ?int
     {
         return fake()->randomNumber();
     }

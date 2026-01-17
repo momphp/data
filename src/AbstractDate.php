@@ -55,7 +55,7 @@ abstract class AbstractDate extends AbstractValue
         return static::forDatabaseCreateValue($value, $data);
     }
 
-    public static function forEloquentFactoryValue(AbstractValue $value): ?string
+    public static function forEloquentFactoryValue(): ?string
     {
         return fake()->dateTime()->format('Y-m-d H:i:s');
     }

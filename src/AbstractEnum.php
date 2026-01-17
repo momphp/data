@@ -53,7 +53,7 @@ abstract class AbstractEnum extends AbstractValue
         return static::forArrayValue($value, $data);
     }
 
-    public static function forEloquentFactoryValue(AbstractValue $value): ?string
+    public static function forEloquentFactoryValue(): ?string
     {
         return fake()->word();
     }

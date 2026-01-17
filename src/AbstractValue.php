@@ -9,30 +9,23 @@ use Closure;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 
 abstract class AbstractValue
 {
-    protected static bool $isVisible = true;
+    public static bool $includeInArray = true;
 
-    protected static bool $isSortable = false;
+    public static bool $includeInDatabaseCreate = true;
 
-    protected static bool $isFilterable = false;
+    public static bool $includeInDatabaseUpdate = true;
 
-    protected static bool $isIncludeAllowed = false;
+    public static bool $includeInResponse = true;
+
+    public static bool $includeInEloquentFactory = true;
+
+    public static bool $hasDBColumn = true;
 
     private mixed $data = null;
-
-    private bool $includeInToArray = true;
-
-    private bool $includeInForDatabaseCreate = true;
-
-    private bool $includeInForDatabaseUpdate = true;
-
-    private bool $includeInForResource = true;
-
-    private bool $includeInEloquentFactory = true;
 
     final public function __construct(
         protected readonly mixed $value = null,
@@ -52,43 +45,7 @@ abstract class AbstractValue
 
     abstract public static function forDatabaseUpdateValue(AbstractValue $value, AbstractData $data): mixed;
 
-    abstract public static function forEloquentFactoryValue(AbstractValue $value): mixed;
-
-    public static function isAllowedField(mixed $context = null): bool
-    {
-        if ( ! static::$isVisible) {
-            return false;
-        }
-
-        return static::checkPolicy('viewField', $context);
-    }
-
-    public static function isAllowedSort(mixed $context = null): bool
-    {
-        if ( ! static::$isSortable) {
-            return false;
-        }
-
-        return static::checkPolicy('sortField', $context);
-    }
-
-    public static function isAllowedFilter(mixed $context = null): bool
-    {
-        if ( ! static::$isFilterable) {
-            return false;
-        }
-
-        return static::checkPolicy('filterField', $context);
-    }
-
-    public static function isAllowedInclude(mixed $context = null): bool
-    {
-        if ( ! static::$isIncludeAllowed) {
-            return false;
-        }
-
-        return static::checkPolicy('viewInclude', $context);
-    }
+    abstract public static function forEloquentFactoryValue(): mixed;
 
     public static function fromEloquentModel(Model $model): static
     {
@@ -106,6 +63,11 @@ abstract class AbstractValue
         $value = $item[static::getName()] ?? null;
 
         return new static(value: $value)->setData($item);
+    }
+
+    public static function fromValidation(array $validated, mixed $data = null): static
+    {
+        return new static(value: $validated[static::getNameForValidation()] ?? null);
     }
 
     public static function getDatabaseTableColumnName(): string
@@ -227,66 +189,6 @@ abstract class AbstractValue
         return $parent . '.*.' . static::getName() . '.' . $rule;
     }
 
-    public function isIncludeInToArray(): bool
-    {
-        return $this->includeInToArray;
-    }
-
-    public function setIncludeInToArray(bool $includeInToArray): AbstractValue
-    {
-        $this->includeInToArray = $includeInToArray;
-
-        return $this;
-    }
-
-    public function isIncludeInForDatabaseCreate(): bool
-    {
-        return $this->includeInForDatabaseCreate;
-    }
-
-    public function setIncludeInForDatabaseCreate(bool $includeInForDatabaseCreate): AbstractValue
-    {
-        $this->includeInForDatabaseCreate = $includeInForDatabaseCreate;
-
-        return $this;
-    }
-
-    public function isIncludeInForDatabaseUpdate(): bool
-    {
-        return $this->includeInForDatabaseUpdate;
-    }
-
-    public function setIncludeInForDatabaseUpdate(bool $includeInForDatabaseUpdate): AbstractValue
-    {
-        $this->includeInForDatabaseUpdate = $includeInForDatabaseUpdate;
-
-        return $this;
-    }
-
-    public function isIncludeInForResource(): bool
-    {
-        return $this->includeInForResource;
-    }
-
-    public function setIncludeInForResource(bool $includeInForResource): AbstractValue
-    {
-        $this->includeInForResource = $includeInForResource;
-
-        return $this;
-    }
-
-    public function isIncludeInEloquentFactory(): bool
-    {
-        return $this->includeInEloquentFactory;
-    }
-
-    public function setIncludeInEloquentFactory(bool $includeInEloquentFactory): AbstractValue
-    {
-        $this->includeInEloquentFactory = $includeInEloquentFactory;
-
-        return $this;
-    }
-
     public function getData(): mixed
     {
         return $this->data;
@@ -380,17 +282,5 @@ abstract class AbstractValue
     public function equalsTo(mixed $value): bool
     {
         return $this->toValue() === $value;
-    }
-
-    /**
-     * Centralized Gate check.
-     */
-    protected static function checkPolicy(string $ability, mixed $context = null): bool
-    {
-        if ( ! class_exists(Gate::class) || ! Gate::has($ability)) {
-            return true;
-        }
-
-        return Gate::allows($ability, [$context, static::getDatabaseTableColumnName()]);
     }
 }

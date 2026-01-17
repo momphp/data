@@ -49,7 +49,7 @@ abstract class AbstractFloat extends AbstractValue
         return static::forArrayValue($value, $data);
     }
 
-    public static function forEloquentFactoryValue(AbstractValue $value): ?float
+    public static function forEloquentFactoryValue(): ?float
     {
         return fake()->randomFloat();
     }
