@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use ReflectionClass;
 use ReflectionNamedType;
 use ReflectionProperty;
@@ -524,33 +525,81 @@ abstract class AbstractData implements Arrayable
      */
     public function forResource(Request $request): array
     {
+        $fields = $request->array('fields');
         $class = new ReflectionClass(static::class);
+        $prefix = mb_strtolower(Str::snake(Str::afterLast($class->getName(), '\\')));
 
+        /** @var array<string, mixed> $data */
         $data = collect($class->getProperties())
-            ->filter(function (ReflectionProperty $property): bool {
+            ->filter(function (ReflectionProperty $property) use ($fields, $prefix) {
                 /** @var ReflectionNamedType $type */
                 $type = $property->getType();
 
                 /** @var AbstractValue $name */
                 $name = $type->getName();
 
+                if (count($fields) > 0) {
+                    return $name::$includeInResponse && (in_array($name::getName(), $fields) || array_key_exists($name::getName(), $fields) || array_key_exists($prefix . '_' . $name::getName(), $fields));
+                }
+
                 return $name::$includeInResponse;
             })
-            ->mapWithKeys(function (ReflectionProperty $property) use ($request): array {
+            ->mapWithKeys(function (ReflectionProperty $property) use ($request, $fields, $prefix): array {
                 $propertyName = $property->name;
 
                 /** @var ReflectionNamedType $type */
                 $type = $property->getType();
 
-                /** @var AbstractValue $typeName */
-                $typeName = $type->getName();
+                /** @var AbstractValue $name */
+                $name = $type->getName();
 
-                return [$typeName::getName() => $typeName::forResourceValue($this->{$propertyName}, $request)];
+                if (count($fields) > 0 && (array_key_exists($name::getName(), $fields) || array_key_exists($prefix . '_' . $name::getName(), $fields))) {
+                    $request = new Request(
+                        query: [
+                            'fields' => $fields[$name::getName()] ?? $fields[$prefix . '_' . $name::getName()],
+                        ]
+                    );
+                }
+
+                /** @var AbstractValue $value */
+                $value = $this->{$propertyName};
+
+                return [$name::getName() => $name::forResourceValue($value, $request)];
             })->toArray();
 
-        $data['class'] = static::class;
+        if (in_array('class', $fields) || 0 === count($fields)) {
+            $data['class'] = self::class;
+        }
 
         return $data;
+    }
+
+    /**
+     * @param  array<string, mixed>  $values
+     * @return $this
+     */
+    public function setPropertyIfExists(array $values): static
+    {
+        $class = new ReflectionClass(self::class);
+
+        collect($class->getProperties())
+            ->each(function (ReflectionProperty $property) use ($values): void {
+                $propertyName = Str::studly($property->name);
+                /** @var ReflectionNamedType $type */
+                $type = $property->getType();
+
+                /** @var AbstractValue $class */
+                $class = $type->getName();
+                $name = $class::getName();
+
+                $method = "set{$propertyName}";
+
+                if (method_exists($this, $method) && array_key_exists($name, $values)) {
+                    $this->{$method}($values[$name]);
+                }
+            });
+
+        return $this;
     }
 
     public function toResource(): JsonResource
