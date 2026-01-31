@@ -39,21 +39,21 @@ abstract class AbstractEnum extends AbstractValue
         return null;
     }
 
-    public static function forResourceValue(AbstractValue $value, Request $request): ?string
+    public static function forResourceValue(AbstractValue $value, Request $request): string|int|null
     {
         if ($value instanceof AbstractEnum) {
-            return $value->toNullableString();
+            return $value->toNullableIntOrString();
         }
 
         return null;
     }
 
-    public static function forDatabaseCreateValue(AbstractValue $value, AbstractData $data): ?string
+    public static function forDatabaseCreateValue(AbstractValue $value, AbstractData $data): string|int|null
     {
         return static::forArrayValue($value, $data);
     }
 
-    public static function forDatabaseUpdateValue(AbstractValue $value, AbstractData $data): ?string
+    public static function forDatabaseUpdateValue(AbstractValue $value, AbstractData $data): string|int|null
     {
         return static::forArrayValue($value, $data);
     }
