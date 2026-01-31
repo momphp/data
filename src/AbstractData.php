@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Mom\Data;
 
-use BackedEnum;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Model;
@@ -26,7 +25,7 @@ abstract class AbstractData implements Arrayable
     /** @var TModel|null */
     private ?Model $eloquentModel = null;
 
-    private ?BackedEnum $morphAlias = null;
+    private int|string|null $morphAlias = null;
 
     private bool $existsInDatabase = false;
 
@@ -174,7 +173,9 @@ abstract class AbstractData implements Arrayable
             })->toArray();
 
         /** @phpstan-ignore-next-line */
-        return new static(...$properties)->setEloquentModel($model);
+        return new static(...$properties)
+            ->setEloquentModel($model)
+            ->setMorphAlias($model->getMorphClass());
     }
 
     public static function fromData(AbstractData $data, string $method = 'fromData', mixed $options = null): static
@@ -315,7 +316,7 @@ abstract class AbstractData implements Arrayable
         throw new RuntimeException('The getPrimaryKey method must be implemented.');
     }
 
-    public function getMorphAlias(): ?BackedEnum
+    public function getMorphAlias(): int|string|null
     {
         return $this->morphAlias;
     }
@@ -323,7 +324,7 @@ abstract class AbstractData implements Arrayable
     /**
      * @return $this
      */
-    public function setMorphAlias(?BackedEnum $morphAlias): AbstractData
+    public function setMorphAlias(int|string|null $morphAlias): AbstractData
     {
         $this->morphAlias = $morphAlias;
 
