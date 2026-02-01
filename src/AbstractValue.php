@@ -8,9 +8,11 @@ use BackedEnum;
 use Closure;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Hash;
+use LogicException;
 
 abstract class AbstractValue
 {
@@ -84,6 +86,16 @@ abstract class AbstractValue
     public static function getNameForHuman(): string
     {
         return static::getName() . '_for_human';
+    }
+
+    public static function getValidationRulesForCreate(FormRequest $request): array
+    {
+        throw new LogicException('Method getValidationRulesForCreate must be implemented');
+    }
+
+    public static function getValidationRulesForUpdate(FormRequest $request): array
+    {
+        return static::getValidationRulesForCreate($request);
     }
 
     public static function fromData(AbstractData $data): static
