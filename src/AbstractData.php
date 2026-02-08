@@ -273,7 +273,7 @@ abstract class AbstractData implements Arrayable
             return static::fromStandardClass($item, $options);
         }
 
-        return static::new();
+        return static::fromCustom($item, $method, $options);
     }
 
     public static function getRelationName(): ?string
