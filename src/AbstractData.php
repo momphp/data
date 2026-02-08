@@ -217,29 +217,7 @@ abstract class AbstractData implements Arrayable
 
     public static function fromStandardClass(stdClass $data, mixed $options = null): static
     {
-        $class = new ReflectionClass(static::class);
-
-        $properties = collect($class->getProperties())
-            ->mapWithKeys(function (ReflectionProperty $property) use ($data, $options): array {
-                $method = 'fromStandardClass';
-
-                /** @var ReflectionNamedType $type */
-                $type = $property->getType();
-
-                /** @var class-string<AbstractDataValue> $name */
-                $name = $type->getName();
-
-                if (false === method_exists($name, $method)) {
-                    return [$property->name => $name::new()];
-                }
-
-                return [$property->name => $name::$method($data, $options)];
-            })->toArray();
-
-        /** @phpstan-var static<TModel> $instance */
-        $instance = new static(...$properties);
-
-        return $instance;
+        return static::fromCustom($data, 'fromStandardClass', $options);
     }
 
     /**
