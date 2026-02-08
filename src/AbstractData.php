@@ -19,6 +19,8 @@ use stdClass;
 
 /**
  * @template TModel of \Illuminate\Database\Eloquent\Model
+ *
+ * @phpstan-consistent-constructor
  */
 abstract class AbstractData implements Arrayable
 {
@@ -53,7 +55,7 @@ abstract class AbstractData implements Arrayable
             $model = $factory->create($attributes);
 
             return self::fromEloquentModel($model->load($with))
-                ->setIsExistsInDatabase(true)
+                ->setExistsInDatabase(true)
                 ->setEloquentModel($model);
         }
 
@@ -132,6 +134,9 @@ abstract class AbstractData implements Arrayable
         return new static(...$properties);
     }
 
+    /**
+     * @param  array<string, mixed>  $validated
+     */
     public static function fromValidation(array $validated, ?self $data = null): static
     {
         $class = new ReflectionClass(static::class);
@@ -147,7 +152,10 @@ abstract class AbstractData implements Arrayable
                 return [$property->name => $name::fromValidation($validated, $data)];
             })->toArray();
 
-        return new static(...$properties);
+        /** @phpstan-var static<TModel> $instance */
+        $instance = new static(...$properties);
+
+        return $instance;
     }
 
     /**
@@ -172,13 +180,17 @@ abstract class AbstractData implements Arrayable
                 return [$property->name => $name::fromEloquentModel($model)];
             })->toArray();
 
-        /** @phpstan-ignore-next-line */
         return new static(...$properties)
             ->setEloquentModel($model)
             ->setMorphAlias($model->getMorphClass());
     }
 
     public static function fromData(AbstractData $data, string $method = 'fromData', mixed $options = null): static
+    {
+        return static::fromCustom($data, $method, $options);
+    }
+
+    public static function fromCustom(mixed $data, ?string $method = null, mixed $options = null): static
     {
         $class = new ReflectionClass(static::class);
 
@@ -197,8 +209,10 @@ abstract class AbstractData implements Arrayable
                 return [$property->name => $name::$method($data, $options)];
             })->toArray();
 
-        /** @phpstan-ignore-next-line */
-        return new static(...$properties);
+        /** @phpstan-var static<TModel> $instance */
+        $instance = new static(...$properties);
+
+        return $instance;
     }
 
     public static function fromStandardClass(stdClass $data, mixed $options = null): static
@@ -212,7 +226,7 @@ abstract class AbstractData implements Arrayable
                 /** @var ReflectionNamedType $type */
                 $type = $property->getType();
 
-                /** @var AbstractDataValue $name */
+                /** @var class-string<AbstractDataValue> $name */
                 $name = $type->getName();
 
                 if (false === method_exists($name, $method)) {
@@ -222,8 +236,10 @@ abstract class AbstractData implements Arrayable
                 return [$property->name => $name::$method($data, $options)];
             })->toArray();
 
-        /** @phpstan-ignore-next-line */
-        return new static(...$properties);
+        /** @phpstan-var static<TModel> $instance */
+        $instance = new static(...$properties);
+
+        return $instance;
     }
 
     /**
@@ -236,31 +252,10 @@ abstract class AbstractData implements Arrayable
             $items = collect($items);
         }
 
-        return $items->map(function (mixed $item) use ($method) {
-            if ($item instanceof Model) {
-                return static::fromEloquentModel($item);
-            }
-
-            if (is_array($item)) {
-                return static::fromArray($item);
-            }
-
-            if ($item instanceof AbstractData) {
-                return static::fromData($item, $method);
-            }
-
-            if ($item instanceof stdClass) {
-                return static::fromStandardClass($item);
-            }
-
-            return $item;
-        });
+        return $items->map(fn (mixed $item) => static::from($item, $method));
     }
 
-    /**
-     * @param  TModel|array<string, mixed>|AbstractData|mixed  $item
-     */
-    public static function from(mixed $item): static
+    public static function from(mixed $item, ?string $method = null, mixed $options = null): static
     {
         if ($item instanceof Model) {
             return static::fromEloquentModel($item);
@@ -271,7 +266,11 @@ abstract class AbstractData implements Arrayable
         }
 
         if ($item instanceof AbstractData) {
-            return static::fromData($item);
+            return static::fromData($item, $method, $options);
+        }
+
+        if ($item instanceof stdClass) {
+            return static::fromStandardClass($item, $options);
         }
 
         return static::new();
@@ -368,7 +367,7 @@ abstract class AbstractData implements Arrayable
         return json_encode($this->toArray(), $options);
     }
 
-    public function setIsExistsInDatabase(bool $existsInDatabase): static
+    public function setExistsInDatabase(bool $existsInDatabase): static
     {
         $this->existsInDatabase = $existsInDatabase;
 
