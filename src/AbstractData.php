@@ -19,8 +19,6 @@ use stdClass;
 
 /**
  * @template TModel of \Illuminate\Database\Eloquent\Model
- *
- * @phpstan-consistent-constructor
  */
 abstract class AbstractData implements Arrayable
 {
