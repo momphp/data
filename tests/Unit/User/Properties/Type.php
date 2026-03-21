@@ -14,6 +14,11 @@ class Type extends AbstractEnum
         return 'type';
     }
 
+    public static function forEloquentFactoryValue(): int
+    {
+        return UserTypeEnum::Admin->value;
+    }
+
     public function toNullableEnum(): ?UserTypeEnum
     {
         $value = $this->toValue();

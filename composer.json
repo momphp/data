@@ -1,37 +1,37 @@
 {
-    "name": "mom/data",
-    "description": "A simple DTO package.",
-    "type": "library",
-    "license": "MIT",
-    "autoload": {
-        "psr-4": {
-            "Mom\\Data\\": "src/"
-        }
-    },
-    "autoload-dev": {
-        "psr-4": {
-            "Mom\\Data\\Tests\\": "tests/"
-        }
-    },
-    "authors": [
-        {
-            "name": "Darwin Luague",
-            "email": "darwinluague9001@gmail.com"
-        }
-    ],
-    "minimum-stability": "stable",
-    "require": {
-        "php": "^8.4",
-        "laravel/framework": "^12.1",
-        "fakerphp/faker": "^1.23"
-    },
-    "require-dev": {
-        "pestphp/pest": "^v3.3",
-        "phpstan/phpstan": "^2.1"
-    },
-    "config": {
-        "allow-plugins": {
-            "pestphp/pest-plugin": true
-        }
+  "name": "mom/data",
+  "description": "A simple DTO package.",
+  "type": "library",
+  "license": "MIT",
+  "autoload": {
+    "psr-4": {
+      "Mom\\Data\\": "src/"
     }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Mom\\Data\\Tests\\": "tests/"
+    }
+  },
+  "authors": [
+    {
+      "name": "Darwin Luague",
+      "email": "darwinluague9001@gmail.com"
+    }
+  ],
+  "minimum-stability": "stable",
+  "require": {
+    "php": "^8.4",
+    "laravel/framework": "^13.0",
+    "fakerphp/faker": "^1.23"
+  },
+  "require-dev": {
+    "pestphp/pest": "^v3.3",
+    "phpstan/phpstan": "^2.1"
+  },
+  "config": {
+    "allow-plugins": {
+      "pestphp/pest-plugin": true
+    }
+  }
 }

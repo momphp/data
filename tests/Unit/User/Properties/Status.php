@@ -14,6 +14,11 @@ class Status extends AbstractEnum
         return 'status';
     }
 
+    public static function forEloquentFactoryValue(): string
+    {
+        return StatusEnum::Active->value;
+    }
+
     public function toNullableEnum(): ?StatusEnum
     {
         $value = $this->toValue();
