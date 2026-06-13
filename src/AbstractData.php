@@ -556,7 +556,7 @@ abstract class AbstractData implements Arrayable
      */
     public function setPropertyIfExists(array $values): static
     {
-        $class = new ReflectionClass(self::class);
+        $class = new ReflectionClass(static::class);
 
         collect($class->getProperties())
             ->each(function (ReflectionProperty $property) use ($values): void {
