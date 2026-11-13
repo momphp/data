@@ -105,7 +105,7 @@ abstract class AbstractValue
 
     public static function new(): static
     {
-        return new static();
+        return new static;
     }
 
     public static function from($item): static
@@ -186,7 +186,7 @@ abstract class AbstractValue
             return $parent . '.*';
         }
 
-        if ($isArray && null === $parent) {
+        if ($isArray) {
             return static::getName() . '.*';
         }
 

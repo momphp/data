@@ -15,7 +15,7 @@ abstract class AbstractDataValue extends AbstractValue
 
     public static function new(): static
     {
-        return new static();
+        return new static;
     }
 
     public static function fromClosure(Closure $value): static
@@ -114,6 +114,6 @@ abstract class AbstractDataValue extends AbstractValue
 
     public function toPrimitive(): ?array
     {
-        return $this->toNullableData()->toArray();
+        return $this->toNullableData()?->toArray();
     }
 }

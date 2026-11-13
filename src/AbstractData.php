@@ -106,8 +106,7 @@ abstract class AbstractData implements Arrayable
                 return [$property->name => $name::new()];
             })->toArray();
 
-        /** @phpstan-ignore-next-line */
-        return new static(...$properties);
+        return new static(...$properties); // @phpstan-ignore new.static, return.type
     }
 
     /**
@@ -128,8 +127,7 @@ abstract class AbstractData implements Arrayable
                 return [$property->name => $name::fromDataArray($item)];
             })->toArray();
 
-        /** @phpstan-ignore-next-line */
-        return new static(...$properties);
+        return new static(...$properties); // @phpstan-ignore new.static, return.type
     }
 
     /**
@@ -150,10 +148,7 @@ abstract class AbstractData implements Arrayable
                 return [$property->name => $name::fromValidation($validated, $data)];
             })->toArray();
 
-        /** @phpstan-var static<TModel> $instance */
-        $instance = new static(...$properties);
-
-        return $instance;
+        return new static(...$properties); // @phpstan-ignore new.static, return.type
     }
 
     /**
@@ -178,7 +173,7 @@ abstract class AbstractData implements Arrayable
                 return [$property->name => $name::fromEloquentModel($model)];
             })->toArray();
 
-        return new static(...$properties)
+        return new static(...$properties) // @phpstan-ignore new.static
             ->setEloquentModel($model)
             ->setMorphAlias($model->getMorphClass());
     }
@@ -200,17 +195,14 @@ abstract class AbstractData implements Arrayable
                 /** @var AbstractValue $name */
                 $name = $type->getName();
 
-                if (false === method_exists($name, $method)) {
+                if (null === $method || false === method_exists($name, $method)) {
                     return [$property->name => $name::new()];
                 }
 
                 return [$property->name => $name::$method($data, $options)];
             })->toArray();
 
-        /** @phpstan-var static<TModel> $instance */
-        $instance = new static(...$properties);
-
-        return $instance;
+        return new static(...$properties); // @phpstan-ignore new.static, return.type
     }
 
     public static function fromStandardClass(stdClass $data, mixed $options = null): static
@@ -242,7 +234,7 @@ abstract class AbstractData implements Arrayable
         }
 
         if ($item instanceof AbstractData) {
-            return static::fromData($item, $method, $options);
+            return static::fromData($item, $method ?? 'fromData', $options);
         }
 
         if ($item instanceof stdClass) {
@@ -544,7 +536,7 @@ abstract class AbstractData implements Arrayable
             })->toArray();
 
         if (in_array('class', $fields) || 0 === count($fields)) {
-            $data['class'] = self::class;
+            $data['class'] = static::class;
         }
 
         return $data;

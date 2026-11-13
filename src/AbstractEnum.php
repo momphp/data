@@ -117,7 +117,13 @@ abstract class AbstractEnum extends AbstractValue
 
     public function toNullableInteger(): ?int
     {
-        return (int) $this->toNullableString();
+        $value = $this->toNullableString();
+
+        if (null === $value) {
+            return null;
+        }
+
+        return (int) $value;
     }
 
     public function toInteger(): int
