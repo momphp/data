@@ -29,6 +29,9 @@ abstract class AbstractData implements Arrayable
 
     private bool $existsInDatabase = false;
 
+    /** @var array<class-string, array<string, array{0: ReflectionProperty, 1: class-string<AbstractValue>}>> */
+    private static array $valuePropertyCache = [];
+
     /**
      * @return Factory<TModel>|null
      */
@@ -83,28 +86,27 @@ abstract class AbstractData implements Arrayable
         if (true === $persist) {
             $models = $factory->count($count)->create($attributes);
 
-            return self::collect($models);
+            if ([] !== $with) {
+                $models->load($with);
+            }
+
+            return $models
+                ->map(fn (Model $model): static => static::fromEloquentModel($model)->setExistsInDatabase(true))
+                ->values();
         }
 
-        $models = $factory->count($count)->make($attributes);
-
-        return self::collect($models);
+        return $factory->count($count)->make($attributes)
+            ->map(fn (Model $model): static => static::fromEloquentModel($model))
+            ->values();
     }
 
     public static function new(): static
     {
-        $class = new ReflectionClass(static::class);
+        $properties = [];
 
-        $properties = collect($class->getProperties())
-            ->mapWithKeys(function (ReflectionProperty $property): array {
-                /** @var ReflectionNamedType $type */
-                $type = $property->getType();
-
-                /** @var AbstractValue $name */
-                $name = $type->getName();
-
-                return [$property->name => $name::new()];
-            })->toArray();
+        foreach (static::valueProperties() as $name => [, $valueClass]) {
+            $properties[$name] = $valueClass::new();
+        }
 
         return new static(...$properties); // @phpstan-ignore new.static, return.type
     }
@@ -114,18 +116,11 @@ abstract class AbstractData implements Arrayable
      */
     public static function fromArray(array $item): static
     {
-        $class = new ReflectionClass(static::class);
+        $properties = [];
 
-        $properties = collect($class->getProperties())
-            ->mapWithKeys(function (ReflectionProperty $property) use ($item): array {
-                /** @var ReflectionNamedType $type */
-                $type = $property->getType();
-
-                /** @var AbstractValue $name */
-                $name = $type->getName();
-
-                return [$property->name => $name::fromDataArray($item)];
-            })->toArray();
+        foreach (static::valueProperties() as $name => [, $valueClass]) {
+            $properties[$name] = $valueClass::fromDataArray($item);
+        }
 
         return new static(...$properties); // @phpstan-ignore new.static, return.type
     }
@@ -135,18 +130,11 @@ abstract class AbstractData implements Arrayable
      */
     public static function fromValidation(array $validated, ?self $data = null): static
     {
-        $class = new ReflectionClass(static::class);
+        $properties = [];
 
-        $properties = collect($class->getProperties())
-            ->mapWithKeys(function (ReflectionProperty $property) use ($validated, $data): array {
-                /** @var ReflectionNamedType $type */
-                $type = $property->getType();
-
-                /** @var AbstractValue $name */
-                $name = $type->getName();
-
-                return [$property->name => $name::fromValidation($validated, $data)];
-            })->toArray();
+        foreach (static::valueProperties() as $name => [, $valueClass]) {
+            $properties[$name] = $valueClass::fromValidation($validated, $data);
+        }
 
         return new static(...$properties); // @phpstan-ignore new.static, return.type
     }
@@ -160,18 +148,11 @@ abstract class AbstractData implements Arrayable
             return static::new();
         }
 
-        $class = new ReflectionClass(static::class);
+        $properties = [];
 
-        $properties = collect($class->getProperties())
-            ->mapWithKeys(function (ReflectionProperty $property) use ($model): array {
-                /** @var ReflectionNamedType $type */
-                $type = $property->getType();
-
-                /** @var AbstractValue $name */
-                $name = $type->getName();
-
-                return [$property->name => $name::fromEloquentModel($model)];
-            })->toArray();
+        foreach (static::valueProperties() as $name => [, $valueClass]) {
+            $properties[$name] = $valueClass::fromEloquentModel($model);
+        }
 
         return new static(...$properties) // @phpstan-ignore new.static
             ->setEloquentModel($model)
@@ -185,22 +166,13 @@ abstract class AbstractData implements Arrayable
 
     public static function fromCustom(mixed $data, ?string $method = null, mixed $options = null): static
     {
-        $class = new ReflectionClass(static::class);
+        $properties = [];
 
-        $properties = collect($class->getProperties())
-            ->mapWithKeys(function (ReflectionProperty $property) use ($data, $method, $options): array {
-                /** @var ReflectionNamedType $type */
-                $type = $property->getType();
-
-                /** @var AbstractValue $name */
-                $name = $type->getName();
-
-                if (null === $method || false === method_exists($name, $method)) {
-                    return [$property->name => $name::new()];
-                }
-
-                return [$property->name => $name::$method($data, $options)];
-            })->toArray();
+        foreach (static::valueProperties() as $name => [, $valueClass]) {
+            $properties[$name] = null === $method || false === method_exists($valueClass, $method)
+                ? $valueClass::new()
+                : $valueClass::$method($data, $options);
+        }
 
         return new static(...$properties); // @phpstan-ignore new.static, return.type
     }
@@ -254,28 +226,15 @@ abstract class AbstractData implements Arrayable
      */
     public static function forEloquentFactory(): array
     {
-        $class = new ReflectionClass(static::class);
+        $attributes = [];
 
-        return collect($class->getProperties())
-            ->filter(function (ReflectionProperty $property): bool {
-                /** @var ReflectionNamedType $type */
-                $type = $property->getType();
+        foreach (static::valueProperties() as [, $valueClass]) {
+            if ($valueClass::$hasDBColumn && $valueClass::$includeInEloquentFactory) {
+                $attributes[$valueClass::getDatabaseTableColumnName()] = $valueClass::forEloquentFactoryValue();
+            }
+        }
 
-                /** @var AbstractValue $name */
-                $name = $type->getName();
-
-                return $name::$hasDBColumn && $name::$includeInEloquentFactory;
-
-            })
-            ->mapWithKeys(function (ReflectionProperty $property): array {
-                /** @var ReflectionNamedType $type */
-                $type = $property->getType();
-
-                /** @var AbstractValue $name */
-                $name = $type->getName();
-
-                return [$name::getDatabaseTableColumnName() => $name::forEloquentFactoryValue()];
-            })->toArray();
+        return $attributes;
     }
 
     public function getPrimaryKey(): AbstractValue
@@ -332,7 +291,7 @@ abstract class AbstractData implements Arrayable
 
     public function toJson(int $options = 0): string
     {
-        return json_encode($this->toArray(), $options);
+        return json_encode($this->toArray(), $options | JSON_THROW_ON_ERROR);
     }
 
     public function setExistsInDatabase(bool $existsInDatabase): static
@@ -357,29 +316,13 @@ abstract class AbstractData implements Arrayable
      */
     public function toArray(): array
     {
-        $class = new ReflectionClass(static::class);
+        $data = [];
 
-        $data = collect($class->getProperties())
-            ->filter(function (ReflectionProperty $property): bool {
-                /** @var ReflectionNamedType $type */
-                $type = $property->getType();
-
-                /** @var AbstractValue $name */
-                $name = $type->getName();
-
-                return $name::$includeInArray;
-            })
-            ->mapWithKeys(function (ReflectionProperty $property): array {
-                $propertyName = $property->name;
-
-                /** @var ReflectionNamedType $type */
-                $type = $property->getType();
-
-                /** @var AbstractValue $typeName */
-                $typeName = $type->getName();
-
-                return [$typeName::getName() => $typeName::forArrayValue($this->{$propertyName}, $this)];
-            })->toArray();
+        foreach (static::valueProperties() as [$property, $valueClass]) {
+            if ($valueClass::$includeInArray) {
+                $data[$valueClass::getName()] = $valueClass::forArrayValue($property->getValue($this), $this);
+            }
+        }
 
         $data['class'] = static::class;
 
@@ -399,29 +342,15 @@ abstract class AbstractData implements Arrayable
      */
     public function forDatabaseCreate(): array
     {
-        $class = new ReflectionClass(static::class);
+        $data = [];
 
-        return collect($class->getProperties())
-            ->filter(function (ReflectionProperty $property): bool {
-                /** @var ReflectionNamedType $type */
-                $type = $property->getType();
+        foreach (static::valueProperties() as [$property, $valueClass]) {
+            if ($valueClass::$hasDBColumn && $valueClass::$includeInDatabaseCreate) {
+                $data[$valueClass::getDatabaseTableColumnName()] = $valueClass::forDatabaseCreateValue($property->getValue($this), $this);
+            }
+        }
 
-                /** @var AbstractValue $name */
-                $name = $type->getName();
-
-                return $name::$hasDBColumn && $name::$includeInDatabaseCreate;
-            })
-            ->mapWithKeys(function (ReflectionProperty $property): array {
-                $propertyName = $property->name;
-
-                /** @var ReflectionNamedType $type */
-                $type = $property->getType();
-
-                /** @var AbstractValue $typeName */
-                $typeName = $type->getName();
-
-                return [$typeName::getDatabaseTableColumnName() => $typeName::forDatabaseCreateValue($this->{$propertyName}, $this)];
-            })->toArray();
+        return $data;
     }
 
     /**
@@ -429,29 +358,15 @@ abstract class AbstractData implements Arrayable
      */
     public function forDatabaseUpdate(): array
     {
-        $class = new ReflectionClass(static::class);
+        $data = [];
 
-        return collect($class->getProperties())
-            ->filter(function (ReflectionProperty $property): bool {
-                /** @var ReflectionNamedType $type */
-                $type = $property->getType();
+        foreach (static::valueProperties() as [$property, $valueClass]) {
+            if ($valueClass::$hasDBColumn && $valueClass::$includeInDatabaseUpdate) {
+                $data[$valueClass::getDatabaseTableColumnName()] = $valueClass::forDatabaseUpdateValue($property->getValue($this), $this);
+            }
+        }
 
-                /** @var AbstractValue $name */
-                $name = $type->getName();
-
-                return $name::$hasDBColumn && $name::$includeInDatabaseUpdate;
-            })
-            ->mapWithKeys(function (ReflectionProperty $property): array {
-                $propertyName = $property->name;
-
-                /** @var ReflectionNamedType $type */
-                $type = $property->getType();
-
-                /** @var AbstractValue $typeName */
-                $typeName = $type->getName();
-
-                return [$typeName::getDatabaseTableColumnName() => $typeName::forDatabaseUpdateValue($this->{$propertyName}, $this)];
-            })->toArray();
+        return $data;
     }
 
     /**
@@ -459,29 +374,13 @@ abstract class AbstractData implements Arrayable
      */
     public function toEncryptedArray(): array
     {
-        $class = new ReflectionClass(static::class);
+        $data = [];
 
-        $data = collect($class->getProperties())
-            ->filter(function (ReflectionProperty $property): bool {
-                /** @var ReflectionNamedType $type */
-                $type = $property->getType();
-
-                /** @var AbstractValue $name */
-                $name = $type->getName();
-
-                return $name::$includeInArray;
-            })
-            ->mapWithKeys(function (ReflectionProperty $property): array {
-                $propertyName = $property->name;
-
-                /** @var ReflectionNamedType $type */
-                $type = $property->getType();
-
-                /** @var AbstractValue $typeName */
-                $typeName = $type->getName();
-
-                return [$typeName::getName() => $typeName::forEncryptedArrayValue($this->{$propertyName}, $this)];
-            })->toArray();
+        foreach (static::valueProperties() as [$property, $valueClass]) {
+            if ($valueClass::$includeInArray) {
+                $data[$valueClass::getName()] = $valueClass::forEncryptedArrayValue($property->getValue($this), $this);
+            }
+        }
 
         $data['class'] = static::class;
 
@@ -494,48 +393,37 @@ abstract class AbstractData implements Arrayable
     public function forResource(Request $request): array
     {
         $fields = $request->array('fields');
-        $class = new ReflectionClass(static::class);
-        $prefix = mb_strtolower(Str::snake(Str::afterLast($class->getName(), '\\')));
+        $hasFields = count($fields) > 0;
+        $prefix = mb_strtolower(Str::snake(Str::afterLast(static::class, '\\')));
 
         /** @var array<string, mixed> $data */
-        $data = collect($class->getProperties())
-            ->filter(function (ReflectionProperty $property) use ($fields, $prefix) {
-                /** @var ReflectionNamedType $type */
-                $type = $property->getType();
+        $data = [];
 
-                /** @var AbstractValue $name */
-                $name = $type->getName();
+        foreach (static::valueProperties() as [$property, $valueClass]) {
+            if ( ! $valueClass::$includeInResponse) {
+                continue;
+            }
 
-                if (count($fields) > 0) {
-                    return $name::$includeInResponse && (in_array($name::getName(), $fields) || array_key_exists($name::getName(), $fields) || array_key_exists($prefix . '_' . $name::getName(), $fields));
-                }
+            $name = $valueClass::getName();
+            $prefixedName = $prefix . '_' . $name;
+            $hasNestedFields = $hasFields && (array_key_exists($name, $fields) || array_key_exists($prefixedName, $fields));
 
-                return $name::$includeInResponse;
-            })
-            ->mapWithKeys(function (ReflectionProperty $property) use ($request, $fields, $prefix): array {
-                $propertyName = $property->name;
+            if ($hasFields && ! $hasNestedFields && ! in_array($name, $fields)) {
+                continue;
+            }
 
-                /** @var ReflectionNamedType $type */
-                $type = $property->getType();
+            // Nested field selections are passed down to the value as their own request.
+            $valueRequest = $hasNestedFields
+                ? new Request(query: ['fields' => $fields[$name] ?? $fields[$prefixedName]])
+                : $request;
 
-                /** @var AbstractValue $name */
-                $name = $type->getName();
+            /** @var AbstractValue $value */
+            $value = $property->getValue($this);
 
-                if (count($fields) > 0 && (array_key_exists($name::getName(), $fields) || array_key_exists($prefix . '_' . $name::getName(), $fields))) {
-                    $request = new Request(
-                        query: [
-                            'fields' => $fields[$name::getName()] ?? $fields[$prefix . '_' . $name::getName()],
-                        ]
-                    );
-                }
+            $data[$name] = $valueClass::forResourceValue($value, $valueRequest);
+        }
 
-                /** @var AbstractValue $value */
-                $value = $this->{$propertyName};
-
-                return [$name::getName() => $name::forResourceValue($value, $request)];
-            })->toArray();
-
-        if (in_array('class', $fields) || 0 === count($fields)) {
+        if (in_array('class', $fields) || ! $hasFields) {
             $data['class'] = static::class;
         }
 
@@ -548,24 +436,14 @@ abstract class AbstractData implements Arrayable
      */
     public function setPropertyIfExists(array $values): static
     {
-        $class = new ReflectionClass(static::class);
+        foreach (static::valueProperties() as $propertyName => [, $valueClass]) {
+            $name = $valueClass::getName();
+            $method = 'set' . Str::studly($propertyName);
 
-        collect($class->getProperties())
-            ->each(function (ReflectionProperty $property) use ($values): void {
-                $propertyName = Str::studly($property->name);
-                /** @var ReflectionNamedType $type */
-                $type = $property->getType();
-
-                /** @var AbstractValue $class */
-                $class = $type->getName();
-                $name = $class::getName();
-
-                $method = "set{$propertyName}";
-
-                if (method_exists($this, $method) && array_key_exists($name, $values)) {
-                    $this->{$method}($values[$name]);
-                }
-            });
+            if (array_key_exists($name, $values) && method_exists($this, $method)) {
+                $this->{$method}($values[$name]);
+            }
+        }
 
         return $this;
     }
@@ -573,6 +451,34 @@ abstract class AbstractData implements Arrayable
     public function toResource(): JsonResource
     {
         throw new RuntimeException('The toResource method must be implemented.');
+    }
+
+    /**
+     * The value properties of this data class, keyed by property name.
+     *
+     * Reflection is done once per class and cached for the rest of the process.
+     *
+     * @return array<string, array{0: ReflectionProperty, 1: class-string<AbstractValue>}>
+     */
+    protected static function valueProperties(): array
+    {
+        if (isset(self::$valuePropertyCache[static::class])) {
+            return self::$valuePropertyCache[static::class];
+        }
+
+        $properties = [];
+
+        foreach (new ReflectionClass(static::class)->getProperties() as $property) {
+            /** @var ReflectionNamedType $type */
+            $type = $property->getType();
+
+            /** @var class-string<AbstractValue> $valueClass */
+            $valueClass = $type->getName();
+
+            $properties[$property->name] = [$property, $valueClass];
+        }
+
+        return self::$valuePropertyCache[static::class] = $properties;
     }
 
     protected static function resolveColumnName(string $className, string $fallback): string

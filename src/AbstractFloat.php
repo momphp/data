@@ -73,6 +73,11 @@ abstract class AbstractFloat extends AbstractValue
             return $value;
         }
 
+        // Whole numbers often arrive as ints, and request input or decimal columns as strings.
+        if (is_int($value) || (is_string($value) && is_numeric($value))) {
+            return (float) $value;
+        }
+
         if ($value instanceof AbstractFloat) {
             return $value->toNullableFloat();
         }

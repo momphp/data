@@ -30,6 +30,10 @@ abstract class AbstractValue
 
     private mixed $data = null;
 
+    private bool $closureResolved = false;
+
+    private mixed $closureValue = null;
+
     final public function __construct(
         protected readonly mixed $value = null,
     ) {}
@@ -54,11 +58,7 @@ abstract class AbstractValue
     {
         $value = $model->getAttributes()[static::getDatabaseTableColumnName()] ?? null;
 
-        if (is_string($value) && json_validate($value)) {
-            $value = json_decode($value, true);
-        }
-
-        return new static(value: $value)->setData($model);
+        return new static(value: static::castDatabaseValue($value))->setData($model);
     }
 
     public static function fromDataArray(array $item): static
@@ -235,7 +235,7 @@ abstract class AbstractValue
         }
 
         if (is_array($value)) {
-            $value = json_encode($value);
+            $value = json_encode($value, JSON_THROW_ON_ERROR);
         }
 
         try {
@@ -285,8 +285,14 @@ abstract class AbstractValue
 
     public function toValue(): mixed
     {
+        // Lazy values run once; later reads reuse the result instead of repeating the work.
         if ($this->value instanceof Closure) {
-            return ($this->value)();
+            if ( ! $this->closureResolved) {
+                $this->closureValue = ($this->value)();
+                $this->closureResolved = true;
+            }
+
+            return $this->closureValue;
         }
 
         return $this->value;
@@ -295,5 +301,32 @@ abstract class AbstractValue
     public function equalsTo(mixed $value): bool
     {
         return $this->toValue() === $value;
+    }
+
+    /**
+     * Convert a raw database attribute before it is stored as the value.
+     *
+     * Values are kept as-is by default, so a string column holding "123" or "true"
+     * stays a string. Types that store structured data override this.
+     */
+    protected static function castDatabaseValue(mixed $value): mixed
+    {
+        return $value;
+    }
+
+    /**
+     * Decode a JSON string into an array, leaving any other value untouched.
+     */
+    protected static function decodeJsonArray(mixed $value): mixed
+    {
+        if (is_string($value) && json_validate($value)) {
+            $decoded = json_decode($value, true);
+
+            if (is_array($decoded)) {
+                return $decoded;
+            }
+        }
+
+        return $value;
     }
 }

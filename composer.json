@@ -26,6 +26,7 @@
         "fakerphp/faker": "^1.23"
     },
     "require-dev": {
+        "orchestra/testbench": "^11.0",
         "pestphp/pest": "^v3.3",
         "phpstan/phpstan": "^2.1"
     },
@@ -33,5 +34,8 @@
         "allow-plugins": {
             "pestphp/pest-plugin": true
         }
+    },
+    "scripts": {
+        "test": "pest"
     }
 }

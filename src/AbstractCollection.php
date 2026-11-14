@@ -131,4 +131,9 @@ abstract class AbstractCollection extends AbstractValue
     {
         return $this->toCollection()->toArray();
     }
+
+    protected static function castDatabaseValue(mixed $value): mixed
+    {
+        return static::decodeJsonArray($value);
+    }
 }

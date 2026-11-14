@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Mom\Data;
 
 use Carbon\CarbonImmutable;
+use DateTimeInterface;
 use Illuminate\Http\Request;
 
 abstract class AbstractDate extends AbstractValue
@@ -78,7 +79,13 @@ abstract class AbstractDate extends AbstractValue
             return $value;
         }
 
-        if (is_string($value)) {
+        // Covers mutable Carbon and plain DateTime instances.
+        if ($value instanceof DateTimeInterface) {
+            return CarbonImmutable::instance($value);
+        }
+
+        // An empty string would otherwise parse as "now".
+        if (is_string($value) && '' !== mb_trim($value)) {
             return CarbonImmutable::parse($value);
         }
 
@@ -106,12 +113,14 @@ abstract class AbstractDate extends AbstractValue
 
     public function toISOString(): string
     {
-        return $this->toCarbon()->toISOString();
+        return static::formatISOString($this->toCarbon());
     }
 
     public function toNullableISOString(): ?string
     {
-        return $this->toNullableCarbon()?->toISOString();
+        $carbon = $this->toNullableCarbon();
+
+        return null === $carbon ? null : static::formatISOString($carbon);
     }
 
     public function toNullableDateString(): ?string
@@ -122,5 +131,20 @@ abstract class AbstractDate extends AbstractValue
     public function toDateString(): string
     {
         return $this->toCarbon()->toDateString();
+    }
+
+    /**
+     * Same output as Carbon's toISOString(), which is about ten times slower because it
+     * goes through isoFormat(). Years outside 1-9999 use Carbon's extended year format.
+     */
+    protected static function formatISOString(CarbonImmutable $carbon): string
+    {
+        $utc = $carbon->utc();
+
+        if ($utc->year < 1 || $utc->year > 9999) {
+            return $carbon->toISOString();
+        }
+
+        return $utc->format('Y-m-d\TH:i:s.u\Z');
     }
 }

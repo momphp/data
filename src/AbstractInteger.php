@@ -73,6 +73,13 @@ abstract class AbstractInteger extends AbstractValue
             return $value;
         }
 
+        // Request input and some database drivers deliver integers as strings, e.g. "42".
+        if (is_string($value)) {
+            $integer = filter_var($value, FILTER_VALIDATE_INT);
+
+            return false === $integer ? null : $integer;
+        }
+
         if ($value instanceof AbstractInteger) {
             return $value->toNullableInteger();
         }

@@ -88,7 +88,7 @@ abstract class AbstractDataValue extends AbstractValue
 
     public function toJson(): string
     {
-        return json_encode($this->toArray());
+        return json_encode($this->toArray(), JSON_THROW_ON_ERROR);
     }
 
     public function toNullableJson(): ?string
@@ -99,7 +99,7 @@ abstract class AbstractDataValue extends AbstractValue
             return null;
         }
 
-        return json_encode($this->toArray());
+        return json_encode($value, JSON_THROW_ON_ERROR);
     }
 
     public function toResource(Request $request): array
@@ -115,5 +115,10 @@ abstract class AbstractDataValue extends AbstractValue
     public function toPrimitive(): ?array
     {
         return $this->toNullableData()?->toArray();
+    }
+
+    protected static function castDatabaseValue(mixed $value): mixed
+    {
+        return static::decodeJsonArray($value);
     }
 }
